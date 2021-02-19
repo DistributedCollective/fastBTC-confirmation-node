@@ -1,0 +1,24 @@
+{
+  "name": "fastbtc-confirmation-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "start.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DistributedCollective/fastBTC-confirmation-node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DistributedCollective/fastBTC-confirmation-node/issues"
+  },
+  "homepage": "https://github.com/DistributedCollective/fastBTC-confirmation-node#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^3.1.1",
+    "web3": "^1.3.4"
+  }
+}
