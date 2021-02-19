@@ -19,7 +19,7 @@ class MainController {
         setInterval(this.getNewWithdrawRequest, 1000*60);
     }
 
-    getNewWithdrawRequest(){
+    getWithdrawRequest(){
 
     }
 

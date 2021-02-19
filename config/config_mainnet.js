@@ -7,5 +7,6 @@ export default {
     network: "main",
     db: "node_mainnet.db",
     contractAddress: "0xcC099752238b1932587bf5793Afeb7d80D04F6e1".toLowerCase(),
-    multisigAddress: ""
+    multisigAddress: "",
+    startBlock: 3000000
 }

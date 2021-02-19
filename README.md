@@ -1,10 +1,36 @@
+# FastBtc confirmation node
+
+## General description
+A 3 out of 5 multisig is the owner of the backend contract. Each of the key holders runs a fastBTC node. There will be one main node (fast-btc-repo) and 4 confirmation nodes (fast-btc-confirmationnode-repo). 
+  
+The main node monitors the BTC multisignature addresses for incoming deposits. As soon as a deposit is recognized and confirmed, it is submitting a transaction to the multisig, requesting an equivalent payout from the smart contract. This transaction is emitting a submission event.
+  
+The  confirmation nodes listen for submission events. As soon as one is emitted, they verify that 
+- a deposit was made on the bitcoin address linked to the receiver’s RSK address, 
+- the bitcoin address is indeed derived from the BTC multisig,
+- the amount of the payout is correct,
+- the submission was made by the main node.
+
+If all four checks are successful, they confirm the transaction on the multisig contract. On the third confirmation, the transaction is executed immediately.
+
+To save transaction costs, the confirmation nodes introduce a delay. Every node has an index. Nodes with index > 2 wait for the specified time after receiving a submission event. After the time passed, they read the state of the submission from the multisig contract. If it was not yet executed, they send a confirmation transaction.
 
 
+### Requirements
+
+NodeJs > 12.1  
+ 
 
 
+### Install
+
+Npm i
 
 
-improvements:
+### Start
+
+
+### improvements:
 
 Create an easy executable?
 https://medium.com/jspoint/how-to-create-an-executable-exe-file-from-javascript-code-using-node-js-45154ba4de20
