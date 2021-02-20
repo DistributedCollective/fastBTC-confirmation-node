@@ -17,21 +17,24 @@ class MainController {
     }
 
     start() {
-        setInterval(this.getNewWithdrawRequest, 1000 * 60);
+        //setInterval(this.getNewWithdrawRequest, 1000 * 60);
+        this.getWithdrawRequest("0xc0ba8fe4b176c1714197d43b9cc6bcf797a4a7461c5fe8d0ef6e184ae7601e51");
     }
 
     /*
-    * Create inifinite loop, starting from a start-block defined in config
-        //1. parse all events from start-block
-        //2. for every event: call isConfirmed on the multisig to check wheter this proposal is still valid
+    * Create inifinite loop
+        //0. parse all events from start-block (defined in config)
+        //1. get tx-id#s
+        //2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
         //3. if so: confirmWithdrawRequest
     */
-    getWithdrawRequest() {
-        
+    async getWithdrawRequest(txId) {
+        const tx = await this.multisig.methods["transactions"](txId).call();
+        console.log(tx);
     }
 
 
-    confirmWithdrawRequest(txId) {
+    async confirmWithdrawRequest(txId) {
         console.log("confirm tx "+txId);
         const wallet = await this.getWallet();
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
