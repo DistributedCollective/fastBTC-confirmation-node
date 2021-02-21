@@ -17,7 +17,8 @@ class MainController {
     }
 
     start() {
-        setInterval(this.getWithdrawRequests, 1000 * 10);
+        this.getWithdrawRequests()
+        setInterval(() => this.getWithdrawRequests(), 1000 * 10);
     }
 
     /**
@@ -29,9 +30,8 @@ class MainController {
     async getWithdrawRequests() {
         console.log("Get withdraw requests");
         const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, true).call();
-        console.log(numberOfTransactions);
+        console.log("Number of pending transactions", numberOfTransactions);
         const allTransactionsIDs = await this.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
-        console.log(allTransactionsIDs)
         allTransactionsIDs.forEach(async txID => {
             const isConfirmed = await this.multisig.methods["isConfirmed"](txID).call();
             if(!isConfirmed) this.confirmWithdrawRequest(txID);
