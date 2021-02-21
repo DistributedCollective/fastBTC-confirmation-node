@@ -24,7 +24,67 @@ NodeJs > 12.1
 
 ### Install
 
-Npm i
+Create directory "secrets" and within a file accounts.js with the credentials of the admin wallet of the confirmation node
+
+```sh
+export default {
+    "test": {
+        adr: "0x..."
+        pKey: ""
+    },
+    "main": {
+        adr: "0x..."
+        pKey: ""
+    }
+}
+```
+
+You can also choose to encrypt your wallet. If you do so, remember to add your encryption password when running the start command like so:
+
+```
+npm run start:main yourpassword
+``` 
+`accounts.js` it should then look like:
+
+```sh
+export default {
+    "test": {
+        adr: "0x..."
+        ks: {
+            version: 3,
+            id: '',
+            address: '',
+            crypto: {
+              ciphertext: '',
+              cipherparams: { iv: '' },
+              cipher: '',
+              kdf: '',
+              kdfparams: {
+                dklen: xx,
+                salt: '',
+                n: xxxx,
+                r: x,
+                p: x
+              },
+              mac: ''
+            }
+        }    },
+    "main": {
+        adr: "0x..."
+        ks: {...}
+    }
+}
+```
+
+To receive notifications on telegram about new transactions and errors create a telegram bot-token-id and write in in a file /secrets/telegram.js
+```sh
+export default "[telegram-bot-token]";
+export default ""; for no notifications
+```
+
+Install all dependencies with
+
+`npm i`
 
 
 ### Start
