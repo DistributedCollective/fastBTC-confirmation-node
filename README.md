@@ -24,7 +24,26 @@ NodeJs > 12.1
 
 ### Install
 
-Npm i
+Create directory "secrets" and within a file accounts.js with the credentials of the admin walet of the confirmation node
+
+export default {
+    "test": {
+        adr: "0x..."
+        pKey: ""
+    },
+    "main": {
+        adr: "0x..."
+        pKey: ""
+    }
+}
+
+To receive notifications on telegram about new transactions and errors create a telegram bot-token-id and write in in a file /secrets/telegram.js
+export default "[telegram-bot-token]";
+export default ""; for no notifications
+
+Install all dependencies with
+
+npm i
 
 
 ### Start

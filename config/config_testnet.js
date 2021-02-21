@@ -1,4 +1,4 @@
-import telegramBot from '../secrets/telegram.js';
+import telegramBot from "../secrets/telegram.js";
 import accounts from "../secrets/accounts";
 
 export default {
