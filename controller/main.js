@@ -17,21 +17,25 @@ class MainController {
     }
 
     start() {
-        //setInterval(this.getNewWithdrawRequest, 1000 * 60);
-        this.getWithdrawRequest("0xc0ba8fe4b176c1714197d43b9cc6bcf797a4a7461c5fe8d0ef6e184ae7601e51");
+        setInterval(this.getWithdrawRequests, 1000 * 60);
     }
 
-    /*
+    /**
     * Create inifinite loop
-        //0. parse all events from start-block (defined in config)
-        //1. get tx-id#s
-        //2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
-        //3. if so: confirmWithdrawRequest
+    * 1. get tx-id#s
+    * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
+    * 3. if so: confirmWithdrawRequest
     */
-    async getWithdrawRequest(txId) {
-        const tx = await this.multisig.methods["transactions"](txId).call();
-        console.log(tx);
-        this.confirmWithdrawRequest(0);
+    async getWithdrawRequests() {
+        console.log("Get withdraw requests");
+        const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, true).call();
+        console.log(numberOfTransactions);
+        const allTransactionsIDs = await this.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
+        console.log(allTransactionsIDs)
+        allTransactionsIDs.forEach(async txID => {
+            const isConfirmed = await this.multisig.methods["isConfirmed"](txID).call();
+            if(!isConfirmed) this.confirmWithdrawRequest(txID);
+        })
     }
 
 
