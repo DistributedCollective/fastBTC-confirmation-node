@@ -17,7 +17,7 @@ class MainController {
     }
 
     start() {
-        this.getWithdrawRequests();
+        this.pollAndConfirmWithdrawRequests();
     }
 
     /**
@@ -26,7 +26,7 @@ class MainController {
     * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
     * 3. if so: confirmWithdrawRequest
     */
-    async getWithdrawRequests() {
+    async pollAndConfirmWithdrawRequests() {
         while (true) {
             console.log("Get withdraw requests");
             const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, true).call();
