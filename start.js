@@ -16,4 +16,4 @@ http.listen(conf.serverPort, () => {
 */
 
 
-MainCtrl.start(http);
+MainCtrl.start();

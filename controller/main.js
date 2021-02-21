@@ -17,7 +17,7 @@ class MainController {
     }
 
     start() {
-        setInterval(this.getWithdrawRequests, 1000 * 60);
+        setInterval(this.getWithdrawRequests, 1000 * 10);
     }
 
     /**
