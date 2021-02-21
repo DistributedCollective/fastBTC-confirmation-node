@@ -18,9 +18,16 @@ class MainController {
     }
 
     start() {
-        this.getAllPastEvents()
+        this.pollGetAllEvents()
         //setInterval(this.getNewWithdrawRequest, 1000 * 60);
         // this.getWithdrawRequest("0xc0ba8fe4b176c1714197d43b9cc6bcf797a4a7461c5fe8d0ef6e184ae7601e51");
+    }
+
+    async pollGetAllEvents() {
+        await this.getAllEvents()
+        setInterval(async () => {
+            await this.getAllEvents()
+        }, 10000) // run every 10 seconds 
     }
 
     /*
@@ -30,22 +37,14 @@ class MainController {
         //2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
         //3. if so: confirmWithdrawRequest
     */
-    async getAllPastEvents() {
+    async getAllEvents() {
         const receipts = [];
-        const wallet = await this.getWallet();
-        const gasPrice = await this.getGasPrice();
-        const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
         const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, false).call();
         const allTransactionsIds = await this.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, false).call();
         allTransactionsIds.forEach(async txId => {
             const isConfirmed = await this.multisig.methods["isConfirmed"](txId).call();
             if (!isConfirmed) {
-                const receipt = await this.multisig.methods.confirmTransaction(txId).send({
-                    from: wallet,
-                    gas: 1000000,
-                    gasPrice: gasPrice,
-                    nonce: nonce
-                });
+                const receipt = await this.confirmWithdrawRequest(txId);
                 receipts.push(receipt)
             }
         })
