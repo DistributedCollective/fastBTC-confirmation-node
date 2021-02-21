@@ -17,8 +17,7 @@ class MainController {
     }
 
     start() {
-        this.getWithdrawRequests()
-        setInterval(() => this.getWithdrawRequests(), 1000 * 10);
+        this.getWithdrawRequests();
     }
 
     /**
@@ -28,19 +27,23 @@ class MainController {
     * 3. if so: confirmWithdrawRequest
     */
     async getWithdrawRequests() {
-        console.log("Get withdraw requests");
-        const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, true).call();
-        console.log("Number of pending transactions", numberOfTransactions);
-        const allTransactionsIDs = await this.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
-        allTransactionsIDs.forEach(async txID => {
-            const isConfirmed = await this.multisig.methods["isConfirmed"](txID).call();
-            if(!isConfirmed) this.confirmWithdrawRequest(txID);
-        })
+        while (true) {
+            console.log("Get withdraw requests");
+            const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, true).call();
+            console.log("Number of pending transactions", numberOfTransactions);
+            const allTransactionsIDs = await this.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
+            allTransactionsIDs.forEach(async txID => {
+                const isConfirmed = await this.multisig.methods["isConfirmed"](txID).call();
+                console.log(isConfirmed)
+                if (!isConfirmed) await this.confirmWithdrawRequest(txID);
+            })
+            await U.wasteTime(5);
+        }
     }
 
 
     async confirmWithdrawRequest(txId) {
-        console.log("confirm tx "+txId);
+        console.log("confirm tx " + txId);
         const wallet = await this.getWallet();
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
         const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
@@ -57,10 +60,10 @@ class MainController {
         return receipt;
     }
 
-     /**
-     * @notice loads a free wallet from the wallet manager 
-     * @dev this is secured by a mutex to make sure we're never exceeding 4 pending transactions per wallet
-     */
+    /**
+    * @notice loads a free wallet from the wallet manager 
+    * @dev this is secured by a mutex to make sure we're never exceeding 4 pending transactions per wallet
+    */
     async getWallet() {
         await this.mutex.acquire();
         let wallet = "";
