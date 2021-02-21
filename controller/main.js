@@ -7,7 +7,7 @@ import conf from '../config/config';
 import U from '../utils/helper';
 import { Mutex } from 'async-mutex';
 import walletManager from './walletCtrl';
-
+import U from '../utils/helper';
 
 class MainController {
     constructor() {
@@ -45,6 +45,7 @@ class MainController {
     async getWithdrawRequest(txId) {
         const tx = await this.multisig.methods["transactions"](txId).call();
         console.log(tx);
+        this.confirmWithdrawRequest(0);
     }
 
 
