@@ -5,6 +5,7 @@ export default {
     serverPort: 3000,
     nodeId: 2, //every node gets a unique id
     nodeProvider: 'https://mainnet.sovryn.app/rpc',
+    masterNode: '', // add me
     network: "main",
     db: "node_mainnet.db",
     multisigAddress: "",

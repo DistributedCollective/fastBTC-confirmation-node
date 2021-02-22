@@ -5,6 +5,7 @@ export default {
     serverPort: 3001,
     nodeId: 2, //every node gets a unique id
     nodeProvider: 'https://testnet.sovryn.app/rpc',
+    masterNode: 'http://127.0.0.1:3007',
     network: "test",
     db: "node_testnet.db",
     multisigAddress: "0x1D67BDA1144CacDbEFF1782f0E5B43D7B50bbFe0".toLowerCase(),

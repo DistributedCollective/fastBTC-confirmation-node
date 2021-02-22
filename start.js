@@ -8,7 +8,7 @@ const http = require('http').createServer(app);
 const io = require("socket.io-client"); 
 import MainCtrl from './controller/main';
 
-const socket = io("http://127.0.0.1:3007", {
+const socket = io(conf.masterNode, {
   reconnectionDelayMax: 10000,
 //   auth: {
 //     token: "123"
