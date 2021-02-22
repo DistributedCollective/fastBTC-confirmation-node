@@ -9,6 +9,7 @@ class TelegramBot {
     async sendMessage(msg) {
         if (this.bot) {
             try {
+                console.log(msg)
                 this.bot.sendMessage(conf.sovrynInternalTelegramId, msg);
             } catch(err) {
                 console.log(err)
