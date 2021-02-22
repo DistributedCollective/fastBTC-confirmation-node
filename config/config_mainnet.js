@@ -9,5 +9,8 @@ export default {
     db: "node_mainnet.db",
     multisigAddress: "",
     startBlock: 3000000,
-    account: accounts["main"]
+    account: accounts["main"],
+    blockExplorer: "https://explorer.rsk.co",
+    sovrynInternalTelegramId: -0, // add me
+    errorBotTelegram: Object.keys(telegramBot).length > 0 ? telegramBot : null
 }

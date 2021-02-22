@@ -6,6 +6,7 @@ import multisigAbi from '../config/multisigAbi';
 import conf from '../config/config';
 import { Mutex } from 'async-mutex';
 import walletManager from './walletCtrl';
+import telegramBot from '../utils/telegram';
 import U from '../utils/helper';
 
 class MainController {
@@ -49,15 +50,20 @@ class MainController {
         const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
         const gasPrice = await this.getGasPrice();
 
-        const receipt = await this.multisig.methods.confirmTransaction(txId).send({
-            from: wallet,
-            gas: 1000000,
-            gasPrice: gasPrice,
-            nonce: nonce
-        });
+        try {
+            const receipt = await this.multisig.methods.confirmTransaction(txId).send({
+                from: wallet,
+                gas: 1000000,
+                gasPrice: gasPrice,
+                nonce: nonce
+            });
+            if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
 
-        walletManager.decreasePending(wallet);
-        return receipt;
+            walletManager.decreasePending(wallet);
+            return receipt;
+        } catch (err) {
+            if (telegramBot) telegramBot.sendMessage("Error confirming transaction with ID " + txId);
+        }
     }
 
     /**
