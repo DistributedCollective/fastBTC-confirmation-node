@@ -1,7 +1,7 @@
 # FastBtc confirmation node
 
 ## General description
-A 3 out of 5 multisig is the owner of the backend contract. Each of the key holders runs a fastBTC node. There will be one main node (fast-btc-repo) and 4 confirmation nodes (fast-btc-confirmationnode-repo). 
+A 3 out of 5 multisig administrates RBtc withdrawals of the smart contract on Rsk. Each of the key holders run a fastBTC node. One main node (https://github.com/DistributedCollective/FastBTC) and 4 confirmation nodes (https://github.com/DistributedCollective/fastBTC-confirmation-node).
   
 The main node monitors the BTC multisignature addresses for incoming deposits. As soon as a deposit is recognized and confirmed, it is submitting a transaction to the multisig, requesting an equivalent payout from the smart contract. This transaction is emitting a submission event.
   
@@ -13,14 +13,13 @@ The  confirmation nodes listen for submission events. As soon as one is emitted,
 
 If all four checks are successful, they confirm the transaction on the multisig contract. On the third confirmation, the transaction is executed immediately.
 
-To save transaction costs, the confirmation nodes introduce a delay. Every node has an index. Nodes with index > 2 wait for the specified time after receiving a submission event. After the time passed, they read the state of the submission from the multisig contract. If it was not yet executed, they send a confirmation transaction.
+To save transaction costs, the confirmation nodes introduce a delay which is randomly assigned by the master node. After the time passed, they read the state of the submission from the multisig contract. If it was not yet executed, they send a confirmation transaction.
 
 
 ### Requirements
 
 NodeJs > 12.1  
  
-
 
 ### Install
 
@@ -50,25 +49,8 @@ npm run start:main yourpassword
 export default {
     "test": {
         adr: "0x..."
-        ks: {
-            version: 3,
-            id: '',
-            address: '',
-            crypto: {
-              ciphertext: '',
-              cipherparams: { iv: '' },
-              cipher: '',
-              kdf: '',
-              kdfparams: {
-                dklen: xx,
-                salt: '',
-                n: xxxx,
-                r: x,
-                p: x
-              },
-              mac: ''
-            }
-        }    },
+        ks: : {Ethereum-v3-keystore}    
+    },
     "main": {
         adr: "0x..."
         ks: {...}
@@ -76,6 +58,10 @@ export default {
 }
 ```
 
+Charge your wallet with enough funds to cover transaction costs. We suggest 0.01 RBtc.
+One confirmation has a cost of ~0.00000549749 RBtc.
+
+  
 To receive notifications on telegram about new transactions and errors create a telegram bot-token-id and write in in a file /secrets/telegram.js
 ```sh
 export default "[telegram-bot-token]";
