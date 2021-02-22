@@ -32,11 +32,11 @@ class MainController {
             const numberOfTransactions = await this.multisig.methods["getTransactionCount"](true, true).call();
             console.log("Number of pending transactions", numberOfTransactions);
             const allTransactionsIDs = await this.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
-            allTransactionsIDs.forEach(async txID => {
+            await Promise.all(allTransactionsIDs.map(async (txID) => {
                 const isConfirmed = await this.multisig.methods["isConfirmed"](txID).call();
                 console.log(isConfirmed)
                 if (!isConfirmed) await this.confirmWithdrawRequest(txID);
-            })
+            }))
             await U.wasteTime(5);
         }
     }
