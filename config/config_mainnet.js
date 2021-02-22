@@ -9,5 +9,6 @@ export default {
     db: "node_mainnet.db",
     multisigAddress: "",
     startBlock: 3000000,
-    account: accounts["main"]
+    account: accounts["main"],
+    errorBotTelegram: telegramBot
 }

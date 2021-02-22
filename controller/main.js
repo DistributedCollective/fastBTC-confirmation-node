@@ -6,6 +6,7 @@ import multisigAbi from '../config/multisigAbi';
 import conf from '../config/config';
 import { Mutex } from 'async-mutex';
 import walletManager from './walletCtrl';
+import telegramBot from '../utils/telegram';
 import U from '../utils/helper';
 
 class MainController {
@@ -55,6 +56,7 @@ class MainController {
             gasPrice: gasPrice,
             nonce: nonce
         });
+        telegramBot.sendMessage("Transaction with ID " + txId + " confirmed. Transaction hash: " + receipt.transactionHash);
 
         walletManager.decreasePending(wallet);
         return receipt;

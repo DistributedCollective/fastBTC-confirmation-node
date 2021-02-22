@@ -9,5 +9,6 @@ export default {
     db: "node_testnet.db",
     multisigAddress: "0x1D67BDA1144CacDbEFF1782f0E5B43D7B50bbFe0".toLowerCase(),
     startBlock: 1000000,
-    account: accounts["test"]
+    account: accounts["test"],
+    errorBotTelegram: telegramBot
 }
