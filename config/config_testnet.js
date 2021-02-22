@@ -12,5 +12,5 @@ export default {
     account: accounts["test"],
     blockExplorer: "https://explorer.testnet.rsk.co",
     sovrynInternalTelegramId: -523868176,
-    errorBotTelegram: telegramBot
+    errorBotTelegram: Object.keys(telegramBot).length > 0 ? telegramBot : null
 }
