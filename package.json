@@ -4,7 +4,7 @@
   "description": "",
   "main": "start.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node -r esm tests/encrypt.js",
     "start:main": "node -r esm start.js mainnet",
     "start:test": "node -r esm start.js testnet"
   },
