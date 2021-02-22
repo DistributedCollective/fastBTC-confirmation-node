@@ -50,16 +50,20 @@ class MainController {
         const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
         const gasPrice = await this.getGasPrice();
 
-        const receipt = await this.multisig.methods.confirmTransaction(txId).send({
-            from: wallet,
-            gas: 1000000,
-            gasPrice: gasPrice,
-            nonce: nonce
-        });
-        telegramBot.sendMessage("Transaction with ID " + txId + " confirmed. Transaction hash: " + receipt.transactionHash);
+        try {
+            const receipt = await this.multisig.methods.confirmTransaction(txId).send({
+                from: wallet,
+                gas: 1000000,
+                gasPrice: gasPrice,
+                nonce: nonce
+            });
+            telegramBot.sendMessage("Transaction with ID " + txId + " confirmed. Transaction hash: " + receipt.transactionHash);
 
-        walletManager.decreasePending(wallet);
-        return receipt;
+            walletManager.decreasePending(wallet);
+            return receipt;
+        } catch (err) {
+            telegramBot.sendMessage("Error confirming transaction with ID " + txId);
+        }
     }
 
     /**
