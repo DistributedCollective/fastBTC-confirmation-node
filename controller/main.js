@@ -57,7 +57,7 @@ class MainController {
                 gasPrice: gasPrice,
                 nonce: nonce
             });
-            telegramBot.sendMessage("Transaction with ID " + txId + " confirmed. Transaction hash: " + receipt.transactionHash);
+            telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
 
             walletManager.decreasePending(wallet);
             return receipt;

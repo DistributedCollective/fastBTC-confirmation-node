@@ -10,6 +10,7 @@ export default {
     multisigAddress: "",
     startBlock: 3000000,
     account: accounts["main"],
+    blockExplorer: "https://explorer.rsk.co",
     sovrynInternalTelegramId: -0, // add me
     errorBotTelegram: telegramBot
 }
