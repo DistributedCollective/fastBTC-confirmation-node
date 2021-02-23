@@ -9,17 +9,19 @@ import MainCtrl from './controller/main';
 
 // setting socket
 const socket = require('socket.io-client')(conf.masterNode);
-
+let delay = 0;
 
 socket.on('connect', () => {
   console.log("Connected to socket")
 
   // a consigner is the slave node watching for withdraw requests that need confirmation
-  socket.emit('getConsignerIndex');
-});
-
-socket.on('receiveConsignerIndex', (data) => {
-  console.log("My index as consigner is " + data);
+  socket.emit('getConsignerIndex', null, (data) => {
+    console.log("My index as consigner is " + data);
+  });
+  socket.emit('getDelay', null, (data) => {
+    delay = data;
+    console.log("My delay is " + delay);
+  });
 });
 
 socket.on('disconnect', function(){
@@ -36,3 +38,5 @@ http.listen(conf.serverPort, () => {
 
 
 MainCtrl.start();
+
+export default delay
