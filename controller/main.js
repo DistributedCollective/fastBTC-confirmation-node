@@ -26,17 +26,21 @@ class MainController {
   * 3. if so: confirmWithdrawRequest
   */
     async pollAndConfirmWithdrawRequests() {
+        let from = 0;
         while (true) {
             console.log("Get withdraw requests");
             const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
             console.log("Number of pending transactions", numberOfTransactions);
 
-            const allTransactionsIDs = await rskCtrl.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
+            const allTransactionsIDs = await rskCtrl.multisig.methods["getTransactionIds"](from, numberOfTransactions, true, true).call();
             console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
             await Promise.all(allTransactionsIDs.map(async (txID) => {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
-                if (!isConfirmed) await rskCtrl.confirmWithdrawRequest(txID);
-                if (!isConfirmed) console.log(isConfirmed)
+                if (!isConfirmed) {
+                    await rskCtrl.confirmWithdrawRequest(txID);
+                    console.log(isConfirmed + "\n 'from' is now " + txID)
+                    from = txID
+                }
             }))
             await U.wasteTime(5);
         }
