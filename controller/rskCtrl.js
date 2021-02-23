@@ -33,7 +33,7 @@ class RskCtrl {
         const gasPrice = await this.getGasPrice();
 
         try {
-            if (delay > 0) setTimeout(() => console.log("Waiting for my turn as a consigner", delay * 1000));
+            if (delay > 0) setTimeout(() => console.log("Waiting for my turn as a consigner " + delay + " seconds"), delay * 1000);
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
                 gas: 1000000,
