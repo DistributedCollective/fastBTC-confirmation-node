@@ -30,11 +30,13 @@ class MainController {
             console.log("Get withdraw requests");
             const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
             console.log("Number of pending transactions", numberOfTransactions);
+
             const allTransactionsIDs = await rskCtrl.multisig.methods["getTransactionIds"](0, numberOfTransactions, true, true).call();
+            console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
             await Promise.all(allTransactionsIDs.map(async (txID) => {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
-                console.log(isConfirmed)
-                //if (!isConfirmed) await rskCtrl.confirmWithdrawRequest(txID);
+                if (!isConfirmed) await rskCtrl.confirmWithdrawRequest(txID);
+                if (!isConfirmed) console.log(isConfirmed)
             }))
             await U.wasteTime(5);
         }

@@ -5,6 +5,7 @@ import node from '../secrets/btcNode';
 export default {
     serverPort: 3000,
     nodeId: 2, //every node gets a unique id
+    masterNode: '', // add me
     rskNodeProvider: 'https://mainnet.sovryn.app/rpc',
     btcNodeProvider: node.main,
     network: "main",
