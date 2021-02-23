@@ -8,6 +8,7 @@ import { Mutex } from 'async-mutex';
 import walletManager from './walletCtrl';
 import telegramBot from '../utils/telegram';
 import U from '../utils/helper';
+import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 
 class MainController {
     constructor() {
@@ -15,6 +16,7 @@ class MainController {
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
         this.mutex = new Mutex();
         walletManager.init(this.web3);
+        this.api = new BitcoinNodeWrapper(config.node);
     }
 
     start() {
@@ -64,6 +66,33 @@ class MainController {
         } catch (err) {
             if (telegramBot) telegramBot.sendMessage("Error confirming transaction with ID " + txId);
         }
+    }
+
+
+    async verifyDeposit(){
+        const txList = await this.api.listReceivedTxsByLabel(adrLabel, 9999);
+
+        // console.log("Address label %s has %s tx", adrLabel, (txList||[]).length);
+
+        for (const tx of (txList || [])) {
+            const confirmations = tx && tx.confirmations;
+
+            if (confirmations === 0) {
+                await this.addPendingDepositTx({
+                    address: tx.address,
+                    value: tx.value,
+                    txId: tx.txId,
+                    label: adrLabel
+                });
+            } else if (confirmations >= this.thresholdConfirmations) {
+                await this.depositTxConfirmed({
+                    address: tx.address,
+                    value: tx.value,
+                    txId: tx.txId,
+                    confirmations: confirmations,
+                    label: adrLabel
+                });
+            }
     }
 
     /**
