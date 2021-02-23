@@ -20,7 +20,7 @@ socket.on('connect', () => {
   });
   socket.emit('getDelay', null, (data) => {
     delay = data;
-    console.log("My delay is " + delay);
+    console.log("My delay is " + delay + " seconds");
   });
 });
 
