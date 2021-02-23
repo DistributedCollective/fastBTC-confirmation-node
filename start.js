@@ -15,11 +15,9 @@ socket.on('connect', () => {
   console.log("Connected to socket")
 
   // a consigner is the slave node watching for withdraw requests that need confirmation
-  socket.emit('getConsignerIndex', null, (data) => {
-    console.log("My index as consigner is " + data);
-  });
-  socket.emit('getDelay', null, (data) => {
-    delay = data;
+  socket.emit('getConsignerIndexAndDelay', null, (data) => {
+    console.log("My index as consigner is " + data.index);
+    delay = data.delay;
     console.log("My delay is " + delay + " seconds");
   });
 });
