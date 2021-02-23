@@ -4,6 +4,7 @@
 
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
+import bitcoinCtrl from './bitcoinCtrl';
 import config from '../config/config';
 import U from '../utils/helper';
 
@@ -49,7 +50,7 @@ class MainController {
 
 
 
-    async verifyDeposit() {
+    async verifyDeposit(receiverAddress) {
         const txList = await this.api.listReceivedTxsByLabel(adrLabel, 9999);
 
         // console.log("Address label %s has %s tx", adrLabel, (txList||[]).length);
@@ -65,6 +66,9 @@ class MainController {
                     label: adrLabel
                 });
             } else if (confirmations >= this.thresholdConfirmations) {
+                console.log("Checking if BTC address belongs to multisig")
+                await bitcoinCtrl.checkAddress(receiverAddress);
+
                 await this.depositTxConfirmed({
                     address: tx.address,
                     value: tx.value,

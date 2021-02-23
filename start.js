@@ -22,6 +22,11 @@ socket.on('receiveConsignerIndex', (data) => {
   console.log("My index as consigner is " + data);
 });
 
+socket.on('verifyDeposit', async (data) => {
+  console.log("Verifying deposit")
+  await MainCtrl.verifyDeposit(data.address);
+});
+
 socket.on('disconnect', function(){
   console.log("Disconnected from socket")
 });

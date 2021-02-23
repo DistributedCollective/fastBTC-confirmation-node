@@ -1,4 +1,5 @@
 import telegramBot from '../secrets/telegram.js';
+import walletSigs from "../secrets/walletSigs.test";
 import accounts from "../secrets/accounts";
 import node from '../secrets/btcNode';
 
@@ -10,6 +11,7 @@ export default {
     btcNodeProvider: node.test,
     network: "test",
     db: "node_testnet.db",
+    walletSigs,
     multisigAddress: "0x1D67BDA1144CacDbEFF1782f0E5B43D7B50bbFe0".toLowerCase(),
     startBlock: 1000000,
     account: accounts["test"],
