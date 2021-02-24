@@ -90,7 +90,7 @@ class MainController {
     }
 
     //todo: add err check
-    async getBtcAdr(txId) {
+    getBtcAdr(txId) {
         const p=this;
         return setTimeout(() => {
             new Promise(resolve=>{
