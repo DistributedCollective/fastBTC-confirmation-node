@@ -136,7 +136,7 @@ class MainController {
     verifyPaymentAdr(btcAdr) {
         for(let i = 0; i < 100000; i++){
             const publicKeys = conf.walletSigs.pubKeys.map(key => {
-                const node = bip32.fromBase58(key, network);
+                const node = bip32.fromBase58(key, this.network);
                 const child = node.derive(0).derive(i);
                 return child.publicKey;
             });
