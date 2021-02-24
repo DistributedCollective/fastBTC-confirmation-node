@@ -63,8 +63,8 @@ class MainController {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
                     let txHash
-                    // TODO: we somehow need to get the bitcoin transaction hash here
-                    const btcAdr = await this.getBtcAdr('c6ff1d65a2e181ee4f1b0ee7ee94424af50ddd0b50d6062f8fec17550845f960');
+                    
+                    const btcAdr = await this.getBtcAdr(txID);
                     if(!this.verifyPaymentAdr(btcAdr)) {
                         console.error("Wrong btc address");
                     }
