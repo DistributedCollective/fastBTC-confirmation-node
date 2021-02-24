@@ -61,7 +61,6 @@ class MainController {
             
             for(const txID of allTransactionsIDs) {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
-                console.log('CONFIRM', isConfirmed)
                 if (!isConfirmed) {
                     let txHash
                     // TODO: we somehow need to get the bitcoin transaction hash here
