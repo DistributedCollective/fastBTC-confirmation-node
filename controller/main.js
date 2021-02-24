@@ -7,14 +7,14 @@
 import {bip32, networks, payments} from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
-import config from '../config/config';
+import conf from '../config/config';
 import U from '../utils/helper';
 
 
 
 class MainController {
     constructor() {
-        this.api = new BitcoinNodeWrapper(config.btcNodeProvider);
+        this.api = new BitcoinNodeWrapper(conf.btcNodeProvider);
         this.network = networks.bitcoin;
     }
 
@@ -59,24 +59,25 @@ class MainController {
             console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
             
             
-            for(txID of allTransactionsIDs) {
+            for(const txID of allTransactionsIDs) {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
+                console.log('CONFIRM', isConfirmed)
                 if (!isConfirmed) {
-                    const btcAdr = await this.getBtcAdr(txID);
-
+                    let txHash
+                    // TODO: we somehow need to get the bitcoin transaction hash here
+                    const btcAdr = await this.getBtcAdr('c6ff1d65a2e181ee4f1b0ee7ee94424af50ddd0b50d6062f8fec17550845f960');
                     if(!this.verifyPaymentAdr(btcAdr)) {
                         console.error("Wrong btc address");
-                        continue;
                     }
 
-                    const txHash = this.verifyPaymetn(btcAdr);
-                    if(!txhash){
+                    if (btcAdr) txHash = this.verifyPaymentAdr(btcAdr);
+                    if(!txHash){
                         console.error("Error or missing payment");
                         continue;
                     }
 
                     //todo: check if txID was already processed in DB
-                   // if not:
+                    // otherwise:
                     //store txHash+btc address + txID in db
 
                     await U.wasteTime(delay);
@@ -90,13 +91,15 @@ class MainController {
     }
 
     //todo: add err check
-    getBtcAdr(txId) {
+    async getBtcAdr(txId) {
         const p=this;
-        return new Promise(resolve=>{
-            p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
-                resolve(btcAdr);
+        return setTimeout(() => {
+            new Promise(resolve=>{
+                p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
+                    resolve(btcAdr);
+                });
             });
-        });
+        }, 5000)
     }
 
     async verifyDeposit() {
