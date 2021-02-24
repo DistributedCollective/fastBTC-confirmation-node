@@ -7,6 +7,7 @@
 import {bip32, networks, payments} from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
+import printAddresses from '../utils/printAddresses';
 import config from '../config/config';
 import U from '../utils/helper';
 
@@ -99,7 +100,7 @@ class MainController {
         });
     }
 
-    async verifyDeposit() {
+    async verifyDeposit(receiverAddress) {
         const txList = await this.api.listReceivedTxsByLabel(adrLabel, 9999);
 
         // console.log("Address label %s has %s tx", adrLabel, (txList||[]).length);
@@ -108,6 +109,9 @@ class MainController {
             const confirmations = tx && tx.confirmations;
 
             if (confirmations === 0) {
+                console.log("Checking if BTC address belongs to multisig")
+                await printAddresses(receiverAddress);
+
                 await this.addPendingDepositTx({
                     address: tx.address,
                     value: tx.value,
