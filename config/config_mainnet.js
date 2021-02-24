@@ -1,4 +1,5 @@
 import telegramBot from '../secrets/telegram.js';
+import walletSigs from '../secrets/walletSigs.main';
 import accounts from "../secrets/accounts";
 import node from '../secrets/btcNode';
 
@@ -10,6 +11,7 @@ export default {
     network: "main",
     db: "node_mainnet.db",
     multisigAddress: "",
+    walletSigs,
     startBlock: 3000000,
     account: accounts["main"],
     blockExplorer: "https://explorer.rsk.co",
