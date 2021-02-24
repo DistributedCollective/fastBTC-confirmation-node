@@ -15,7 +15,7 @@ import U from '../utils/helper';
 class MainController {
     constructor() {
         this.api = new BitcoinNodeWrapper(conf.btcNodeProvider);
-        this.network = networks.bitcoin;
+        this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
     }
 
     async start(socket) {
@@ -142,11 +142,11 @@ class MainController {
             });
     
             const payment = payments.p2wsh({
-                network: network,
+                network: this.network,
                 redeem: payments.p2ms({
                     m: conf.walletSigs.cosigners,
                     pubkeys: publicKeys,
-                    network: network
+                    network: this.network
                 })
             });
     
