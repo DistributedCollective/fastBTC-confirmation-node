@@ -26,16 +26,6 @@ const getAddresses = () => {
     }
 }
 
-export const getAddressesFromFile = () => {
-    fs.readFile(__dirname + '/../genBtcAddresses.json', (error, data) => {
-        if (error) {
-            console.log('Error retrieving genBtcAddresses.json =', error)
-        } else {
-            return data;
-        }
-    }); 
-}
-
 fs.readFile(__dirname + '/../genBtcAddresses.json', (error, data) => {
     if (error) {
         console.log('Error retrieving genBtcAddresses.json =', error)

@@ -4,12 +4,12 @@
  * todo2: check if tx happend and was not processed already (db)
  * todo3: store tx-id in db
  */
+const fs = require('fs')
 import {bip32, networks, payments} from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
-import { getAddressesFromFile } from '../utils/genAddresses';
 
 
 
@@ -129,16 +129,18 @@ class MainController {
         }
     }
 
-    
+
     /**
      * 
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        const allGeneratedAddresses = getAddressesFromFile();
-        allGeneratedAddresses.find((address) => {
-            if(address==btcAdr) return true;
-        })
+        const allGeneratedAddresses = JSON.parse(fs.readFileSync(__dirname + '/../genBtcAddresses.json', 'utf8'));
+        if (allGeneratedAddresses && allGeneratedAddresses.length > 0) {
+            allGeneratedAddresses.find((address) => {
+                if(address==btcAdr) return true;
+            })
+        }
         return false;
     }  
 }
