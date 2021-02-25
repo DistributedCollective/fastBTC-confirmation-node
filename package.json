@@ -7,7 +7,9 @@
     "test": "node -r esm tests/encrypt.js",
     "start:test": "nodemon --config nodemon.json start.js testnet",
     "start:main": "nodemon --config nodemon.json start.js mainnet",
-    "create": "node -r esm utils/createAccount.js"
+    "create": "node -r esm utils/createAccount.js",
+    "genAddresses:test": "node -r esm utils/genAddresses.js testnet",
+    "genAddresses:main": "node -r esm utils/genAddresses.js mainnet"
   },
   "repository": {
     "type": "git",
