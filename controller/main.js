@@ -7,15 +7,15 @@
 import {bip32, networks, payments} from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
-import config from '../config/config';
+import conf from '../config/config';
 import U from '../utils/helper';
 
 
 
 class MainController {
     constructor() {
-        this.api = new BitcoinNodeWrapper(config.btcNodeProvider);
-        this.network = networks.bitcoin;
+        this.api = new BitcoinNodeWrapper(conf.btcNodeProvider);
+        this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
     }
 
     async start(socket) {
@@ -59,24 +59,24 @@ class MainController {
             console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
             
             
-            for(txID of allTransactionsIDs) {
+            for(const txID of allTransactionsIDs) {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
+                    let txHash
+                    
                     const btcAdr = await this.getBtcAdr(txID);
-
                     if(!this.verifyPaymentAdr(btcAdr)) {
                         console.error("Wrong btc address");
-                        continue;
                     }
 
-                    const txHash = this.verifyPaymetn(btcAdr);
-                    if(!txhash){
+                    if (btcAdr) txHash = this.verifyPaymentAdr(btcAdr);
+                    if(!txHash){
                         console.error("Error or missing payment");
                         continue;
                     }
 
                     //todo: check if txID was already processed in DB
-                   // if not:
+                    // otherwise:
                     //store txHash+btc address + txID in db
 
                     await U.wasteTime(delay);
@@ -92,11 +92,13 @@ class MainController {
     //todo: add err check
     getBtcAdr(txId) {
         const p=this;
-        return new Promise(resolve=>{
-            p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
-                resolve(btcAdr);
+        return setTimeout(() => {
+            new Promise(resolve=>{
+                p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
+                    resolve(btcAdr);
+                });
             });
-        });
+        }, 5000)
     }
 
     async verifyDeposit() {
@@ -134,17 +136,17 @@ class MainController {
     verifyPaymentAdr(btcAdr) {
         for(let i = 0; i < 100000; i++){
             const publicKeys = conf.walletSigs.pubKeys.map(key => {
-                const node = bip32.fromBase58(key, network);
+                const node = bip32.fromBase58(key, this.network);
                 const child = node.derive(0).derive(i);
                 return child.publicKey;
             });
     
             const payment = payments.p2wsh({
-                network: network,
+                network: this.network,
                 redeem: payments.p2ms({
                     m: conf.walletSigs.cosigners,
                     pubkeys: publicKeys,
-                    network: network
+                    network: this.network
                 })
             });
     
