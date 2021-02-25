@@ -17,24 +17,25 @@ function createAccount() {
         main: {
             adr: account.address.toLowerCase(),
             ks: ks
+        },
+        test: {
+            adr: account.address.toLowerCase(),
+            ks: ks
         }
     }
     const obj = "export default " + JSON.stringify(w);
 
     fs.writeFile('./secrets/accounts.js', obj, (err)=> {
         if (err) return console.log(err);
-        console.log("keystore created. Share this wallet address with your co-signers_ "+account.address.toLowerCase());
+        console.log("keystore created. Share this wallet address with your co-signers: "+account.address.toLowerCase());
     });
 }
 
 
-
-
-
-
-function decryptAccount() {
+function decryptAccount(p) {
     let r = web3.eth.accounts.decrypt(ks, p);
     console.log(r);
 }
 
 createAccount();
+//decryptAccount()

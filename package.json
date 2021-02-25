@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node -r esm tests/encrypt.js",
     "start:test": "nodemon --config nodemon.json start.js testnet",
-    "start:main": "nodemon --config nodemon.json start.js mainnet"
+    "start:main": "nodemon --config nodemon.json start.js mainnet",
+    "create": "node -r esm utils/createAccount.js"
   },
   "repository": {
     "type": "git",
