@@ -9,6 +9,7 @@ import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
+import { getAddressesFromFile } from '../utils/genAddresses';
 
 
 
@@ -134,24 +135,10 @@ class MainController {
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        for(let i = 0; i < 100000; i++){
-            const publicKeys = conf.walletSigs.pubKeys.map(key => {
-                const node = bip32.fromBase58(key, this.network);
-                const child = node.derive(0).derive(i);
-                return child.publicKey;
-            });
-    
-            const payment = payments.p2wsh({
-                network: this.network,
-                redeem: payments.p2ms({
-                    m: conf.walletSigs.cosigners,
-                    pubkeys: publicKeys,
-                    network: this.network
-                })
-            });
-    
-            if(payment.address==btcAdr) return true;
-        }
+        const allGeneratedAddresses = getAddressesFromFile();
+        allGeneratedAddresses.find((address) => {
+            if(address==btcAdr) return true;
+        })
         return false;
     }  
 }
