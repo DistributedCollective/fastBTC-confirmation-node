@@ -92,13 +92,11 @@ class MainController {
     //todo: add err check
     getBtcAdr(txId) {
         const p=this;
-        return setTimeout(() => {
-            new Promise(resolve=>{
-                p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
-                    resolve(btcAdr);
-                });
+        return new Promise(resolve=>{
+            p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
+                resolve(btcAdr);
             });
-        }, 5000)
+        });
     }
 
     async verifyDeposit() {
