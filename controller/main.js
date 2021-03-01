@@ -10,7 +10,6 @@ import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
-import bitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 const axios = require('axios');
 
 
@@ -37,7 +36,8 @@ class MainController {
                 return;
             }
             conf.btcNodeProvider = node.data;
-            this.api = BitcoinNodeWrapper.init(conf.btcNodeProvider);
+            this.api = BitcoinNodeWrapper;
+            this.api.init(conf.btcNodeProvider);
             console.log("Node setup. Start polling for new withdraw requests.")
             this.pollAndConfirmWithdrawRequests(resp.data.delay);
 
@@ -79,7 +79,7 @@ class MainController {
                     }
 
                     console.log("Checking BTC transaction hash " + txHash);
-                    const tx = await bitcoinNodeWrapper.getRawTx(txHash)
+                    const tx = await this.api.getRawTx(txHash)
                     if (!tx) {
                         console.log("Not a valid BTC transaction hash or missing payment info")
                     } 
