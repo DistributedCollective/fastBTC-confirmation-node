@@ -74,7 +74,7 @@ class MainController {
                     console.log("Got payment info"); 
                     console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
 
-                    await this.verifyPaymentInfo(btcAdr, txHash)
+                    const verification = await this.verifyPaymentInfo(btcAdr, txHash)
 
                     /*
                     if (btcAdr) txHash = this.verifyDeposit(btcAdr, txHash);
@@ -85,9 +85,11 @@ class MainController {
                     */
 
                     await U.wasteTime(delay);
-                    await rskCtrl.confirmWithdrawRequest(txID);
-                    console.log(isConfirmed + "\n 'from' is now " + txID)
-                    from = txID
+                    if (verification) {
+                        await rskCtrl.confirmWithdrawRequest(txID);
+                        console.log(isConfirmed + "\n 'from' is now " + txID)
+                        from = txID
+                    }
                 }
             }
             await U.wasteTime(5);
@@ -112,8 +114,11 @@ class MainController {
     }
 
     async verifyPaymentInfo(btcAdr, txHash) {
+        let btcAdrVerification = false;
         if (!btcAdr || !this.verifyPaymentAdr(btcAdr)) {
             console.error("Wrong btc address");
+        } else {
+            btcAdrVerification = true;
         }
 
         if (txHash) {
@@ -122,6 +127,7 @@ class MainController {
                 console.log("Not a valid BTC transaction hash or missing payment info")
             } else {
                 console.log("Valid BTC transaction hash")
+                if (btcAdrVerification) return true
             }
         } else {
             console.log("Missing payment info")
