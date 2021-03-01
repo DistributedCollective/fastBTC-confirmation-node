@@ -3,9 +3,8 @@
 */
 import conf from './config/config';
 import MainCtrl from './controller/main';
-const socket = require('socket.io-client')(conf.masterNode);
 
 console.log("Hola. Starting confirmation node on "+conf.network);       
-MainCtrl.start(socket);
+MainCtrl.start();
 
 export default 0

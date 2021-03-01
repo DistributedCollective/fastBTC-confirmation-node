@@ -114,7 +114,6 @@ export default class BitcoinNodeWrapper {
             const res = await this.call("gettransaction", [txId, true]);
 
             if (res) {
-
                 const vout = (res.details || []).map(el => {
                     return {
                         value: Number(el.amount) * 1e8,
