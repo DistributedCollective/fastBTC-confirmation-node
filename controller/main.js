@@ -6,6 +6,7 @@
  */
 import { bip32, networks, payments } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
+import generatedBtcAddresses from "../genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
@@ -23,9 +24,9 @@ class MainController {
        
         const m = "Hi master, "+new Date(Date.now());
         const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
-        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
+        this.signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
         const p = {
-            signedMessage: signed.signature,
+            signedMessage: this.signed.signature,
             message: m,
             walletAddress: conf.account.adr
         };
@@ -95,14 +96,24 @@ class MainController {
         }
     }
 
-    //todo: add err check
-    getBtcAdr(txId) {
-        const p = this;
-        return new Promise(resolve => {
-            p.socket.emit("getBtcAdr", txId, (btcAdr) => {
-                resolve(btcAdr);
-            });
-        });
+    async getBtcAdr(txId) {
+        const p = {
+            signedMessage: this.signed.signature,
+            message: this.signed.message,
+            walletAddress: conf.account.adr,
+            txId
+        };
+        try {
+            const resp = await axios.post(conf.masterNode + "getBtcAdr", p);
+            console.log(resp.data);
+
+            console.log("The BTC address is " + resp.data);
+            return resp.data
+        } catch (err) {
+            // Handle Error Here
+            console.error("error on getting deposit BTC address");
+            console.error(err);
+        }
     }
 
     async verifyDeposit() {
@@ -138,23 +149,10 @@ class MainController {
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        for (let i = 0; i < 100000; i++) {
-            const publicKeys = conf.walletSigs.pubKeys.map(key => {
-                const node = bip32.fromBase58(key, this.network);
-                const child = node.derive(0).derive(i);
-                return child.publicKey;
-            });
-
-            const payment = payments.p2wsh({
-                network: this.network,
-                redeem: payments.p2ms({
-                    m: conf.walletSigs.cosigners,
-                    pubkeys: publicKeys,
-                    network: this.network
-                })
-            });
-
-            if (payment.address == btcAdr) return true;
+        if (generatedBtcAddresses && generatedBtcAddresses.length > 0) {
+            generatedBtcAddresses.find((address) => {
+                if(address==btcAdr) return true;
+            })
         }
         return false;
     }
