@@ -1,7 +1,8 @@
 import RPCClient from 'rpc-client';
 
-export default class BitcoinNodeWrapper {
-    constructor({url, user, password}) {
+class BitcoinNodeWrapper {
+    init({url, user, password}) {
+        console.log("Init Btc node wrapper. Set node to "+url)
         const uri = new URL(url);
         this.client = new RPCClient({
             host: uri.hostname,
@@ -274,6 +275,6 @@ export default class BitcoinNodeWrapper {
             return [];
         }
     }
-
 }
 
+export default new BitcoinNodeWrapper();

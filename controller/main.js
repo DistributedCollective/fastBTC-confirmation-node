@@ -4,7 +4,7 @@
  * todo2: check if tx happend and was not processed already (db)
  * todo3: store tx-id in db
  */
-import { bip32, networks, payments } from "bitcoinjs-lib";
+import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
@@ -36,7 +36,7 @@ class MainController {
                 return;
             }
             conf.btcNodeProvider = node.data;
-            this.api = new BitcoinNodeWrapper(conf.btcNodeProvider);
+            this.api = BitcoinNodeWrapper.init(conf.btcNodeProvider);
             console.log("Node setup. Start polling for new withdraw requests.")
             this.pollAndConfirmWithdrawRequests(resp.data.delay);
 
