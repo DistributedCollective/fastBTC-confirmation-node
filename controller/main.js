@@ -72,17 +72,9 @@ class MainController {
                     const {btcAdr, txHash } = await this.getPayment(txID);
 
                     console.log("Got payment info"); 
-                    console.log(btcAdr); console.log(txHash);
+                    console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
 
-                    if (!this.verifyPaymentAdr(btcAdr)) {
-                        console.error("Wrong btc address");
-                    }
-
-                    console.log("Checking BTC transaction hash " + txHash);
-                    const tx = await this.api.getRawTx(txHash)
-                    if (!tx) {
-                        console.log("Not a valid BTC transaction hash or missing payment info")
-                    } 
+                    await this.verifyPaymentInfo(btcAdr, txHash)
 
                     /*
                     if (btcAdr) txHash = this.verifyDeposit(btcAdr, txHash);
@@ -116,6 +108,23 @@ class MainController {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
             console.error(err);
+        }
+    }
+
+    async verifyPaymentInfo(btcAdr, txHash) {
+        if (!btcAdr || !this.verifyPaymentAdr(btcAdr)) {
+            console.error("Wrong btc address");
+        }
+
+        if (txHash) {
+            const tx = await this.api.getRawTx(txHash);
+            if (!tx) {
+                console.log("Not a valid BTC transaction hash or missing payment info")
+            } else {
+                console.log("Valid BTC transaction hash")
+            }
+        } else {
+            console.log("Missing payment info")
         }
     }
 
