@@ -114,7 +114,10 @@ class MainController {
             if (tx) {
                 console.log("The transaction hash is " + resp.data.txHash);
                 return resp.data
-            } else console.log("Not a valid BTC transaction hash")
+            } else {
+                console.log("Not a valid BTC transaction hash")
+                return { btcAdr: null, txHash: null };
+            }
         } catch (err) {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
