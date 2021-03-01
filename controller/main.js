@@ -96,14 +96,18 @@ class MainController {
         }
     }
 
-    //todo: add err check
-    getBtcAdr(txId) {
-        const p = this;
-        return new Promise(resolve => {
-            p.socket.emit("getBtcAdr", txId, (btcAdr) => {
-                resolve(btcAdr);
-            });
-        });
+    async getBtcAdr(txId) {
+        try {
+            const resp = await axios.post(conf.masterNode + "getBtcAdr", txId);
+            console.log(resp.data);
+
+            console.log("The BTC address is " + resp.data);
+            return resp.data
+        } catch (err) {
+            // Handle Error Here
+            console.error("error on getting deposit BTC address");
+            console.error(err);
+        }
     }
 
     async verifyDeposit() {
@@ -139,9 +143,8 @@ class MainController {
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        const allGeneratedAddresses = JSON.parse(generatedBtcAddresses);
-        if (allGeneratedAddresses && allGeneratedAddresses.length > 0) {
-            allGeneratedAddresses.find((address) => {
+        if (generatedBtcAddresses && generatedBtcAddresses.length > 0) {
+            generatedBtcAddresses.find((address) => {
                 if(address==btcAdr) return true;
             })
         }
