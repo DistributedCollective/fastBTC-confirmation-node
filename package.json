@@ -5,9 +5,11 @@
   "main": "start.js",
   "scripts": {
     "test": "node -r esm tests/encrypt.js",
-    "start:test": "nodemon --config nodemon.json start.js testnet",
-    "start:main": "nodemon --config nodemon.json start.js mainnet",
-    "create": "node -r esm utils/createAccount.js"
+    "start:test": "npm run genAddresses:test && nodemon --config nodemon.json start.js testnet",
+    "start:main": "npm run genAddresses:main && nodemon --config nodemon.json start.js mainnet",
+    "create": "node -r esm utils/createAccount.js",
+    "genAddresses:test": "node -r esm utils/genAddresses.js testnet",
+    "genAddresses:main": "node -r esm utils/genAddresses.js mainnet"
   },
   "repository": {
     "type": "git",

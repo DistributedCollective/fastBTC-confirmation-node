@@ -6,6 +6,7 @@
  */
 import { bip32, networks, payments } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
+import generatedBtcAddresses from "../genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
@@ -93,7 +94,6 @@ class MainController {
         }
     }
 
-    //todo: add err check
     async getPayment(txId) {
         const p = {
             signedMessage: this.signed.signature,
@@ -148,23 +148,10 @@ class MainController {
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        for (let i = 0; i < 100000; i++) {
-            const publicKeys = conf.walletSigs.pubKeys.map(key => {
-                const node = bip32.fromBase58(key, this.network);
-                const child = node.derive(0).derive(i);
-                return child.publicKey;
-            });
-
-            const payment = payments.p2wsh({
-                network: this.network,
-                redeem: payments.p2ms({
-                    m: conf.walletSigs.cosigners,
-                    pubkeys: publicKeys,
-                    network: this.network
-                })
-            });
-
-            if (payment.address == btcAdr) return true;
+        if (generatedBtcAddresses && generatedBtcAddresses.length > 0) {
+            generatedBtcAddresses.find((address) => {
+                if(address==btcAdr) return true;
+            })
         }
         return false;
     }
