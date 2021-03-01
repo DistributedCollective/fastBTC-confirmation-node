@@ -6,7 +6,7 @@
  */
 import { bip32, networks, payments } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
-import generatedBtcAddresses from "../genBtcAddresses.json";
+import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
@@ -15,29 +15,29 @@ const axios = require('axios');
 
 class MainController {
     constructor() {
-        this.api = new BitcoinNodeWrapper(conf.btcNodeProvider);
         this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
     }
 
     async start() {
         await rskCtrl.init();
-       
-        const m = "Hi master, "+new Date(Date.now());
-        const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
-        this.signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
-        const p = {
-            signedMessage: this.signed.signature,
-            message: m,
-            walletAddress: conf.account.adr
-        };
-        
+        const sign = await this.createSignature();
         // a consigner is the slave node watching for withdraw requests that need confirmation
         try {
-            const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", p);
+            const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", sign);
             console.log(resp.data);
 
             console.log("My index as cosigner is " + resp.data.index);
             console.log("My delay is " + resp.data.delay + " seconds");
+
+            const node = await axios.post(conf.masterNode + "getNode", sign);
+    
+            if(!node || !node.data || !node.data.url){
+                console.error("Can't continue without access to a btc node");
+                return;
+            }
+            conf.btcNodeProvider = node.data;
+            this.api = new BitcoinNodeWrapper(conf.btcNodeProvider);
+            console.log("Node setup. Start polling for new withdraw requests.")
             this.pollAndConfirmWithdrawRequests(resp.data.delay);
 
         } catch (err) {
@@ -45,7 +45,6 @@ class MainController {
             console.error("error on authentication");
             console.error(err);
         }
-
     }
 
 
@@ -97,14 +96,9 @@ class MainController {
     }
 
     async getBtcAdr(txId) {
-        const p = {
-            signedMessage: this.signed.signature,
-            message: this.signed.message,
-            walletAddress: conf.account.adr,
-            txId
-        };
+        const sign = await this.createSignature();
         try {
-            const resp = await axios.post(conf.masterNode + "getBtcAdr", p);
+            const resp = await axios.post(conf.masterNode + "getBtcAdr", {...sign, txId:txId});
             console.log(resp.data);
 
             console.log("The BTC address is " + resp.data);
@@ -155,6 +149,17 @@ class MainController {
             })
         }
         return false;
+    }
+
+    async createSignature(){
+        const m = "Hi master, "+new Date(Date.now());
+        const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
+        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
+        return {
+            signedMessage: signed.signature,
+            message: m,
+            walletAddress: conf.account.adr
+        };
     }
 }
 
