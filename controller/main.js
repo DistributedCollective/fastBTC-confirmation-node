@@ -10,6 +10,7 @@ import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
+import bitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 const axios = require('axios');
 
 
@@ -103,12 +104,17 @@ class MainController {
     async getPayment(txId) {
         const sign = await this.createSignature();
         try {
-            const resp = await axios.post(conf.masterNode + "getPayment", {...sign,txId:txId});
+            const resp = await axios.post(conf.masterNode + "getPayment", {...sign, txId:txId});
             console.log(resp.data);
 
             console.log("The BTC address is " + resp.data.btcAdr);
-            console.log("The transaction hash is " + resp.data.txHash);
-            return resp.data
+            console.log("Checking BTC transaction hash " + resp.data.txHash);
+
+            const tx = await bitcoinNodeWrapper.getRawTx(resp.data.txHash)
+            if (tx) {
+                console.log("The transaction hash is " + resp.data.txHash);
+                return resp.data
+            } else console.log("Not a valid BTC transaction hash")
         } catch (err) {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
