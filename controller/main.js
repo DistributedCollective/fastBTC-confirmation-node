@@ -78,12 +78,14 @@ class MainController {
                         console.error("Wrong btc address");
                     }
 
+                    console.log("Checking BTC transaction hash " + txHash);
+                    const tx = await bitcoinNodeWrapper.getRawTx(txHash)
+                    if (!tx) {
+                        console.log("Not a valid BTC transaction hash or missing payment info")
+                    } 
+
                     /*
                     if (btcAdr) txHash = this.verifyDeposit(btcAdr, txHash);
-                    if (!txHash) {
-                        console.error("Error or missing payment");
-                        continue;
-                    }
 
                     //todo: check if txID was already processed in DB
                     // otherwise:
@@ -108,16 +110,8 @@ class MainController {
             console.log(resp.data);
 
             console.log("The BTC address is " + resp.data.btcAdr);
-            console.log("Checking BTC transaction hash " + resp.data.txHash);
-
-            const tx = await bitcoinNodeWrapper.getRawTx(resp.data.txHash)
-            if (tx) {
-                console.log("The transaction hash is " + resp.data.txHash);
-                return resp.data
-            } else {
-                console.log("Not a valid BTC transaction hash")
-                return { btcAdr: null, txHash: null };
-            }
+            console.log("The transaction hash is " + resp.data.txHash);
+            return resp.data;
         } catch (err) {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
