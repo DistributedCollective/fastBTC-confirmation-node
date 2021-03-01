@@ -5,8 +5,9 @@
  * todo3: store tx-id in db
  */
 const fs = require('fs')
-import {bip32, networks, payments} from "bitcoinjs-lib";
+import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
+import generatedBtcAddresses from "../genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
@@ -135,7 +136,7 @@ class MainController {
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        const allGeneratedAddresses = JSON.parse(fs.readFileSync(__dirname + '/../genBtcAddresses.json', 'utf8'));
+        const allGeneratedAddresses = JSON.parse(generatedBtcAddresses);
         if (allGeneratedAddresses && allGeneratedAddresses.length > 0) {
             allGeneratedAddresses.find((address) => {
                 if(address==btcAdr) return true;
