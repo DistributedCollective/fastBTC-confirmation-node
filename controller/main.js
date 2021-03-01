@@ -23,9 +23,9 @@ class MainController {
        
         const m = "Hi master, "+new Date(Date.now());
         const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
-        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
+        this.signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
         const p = {
-            signedMessage: signed.signature,
+            signedMessage: this.signed.signature,
             message: m,
             walletAddress: conf.account.adr
         };
@@ -68,9 +68,9 @@ class MainController {
             for (const txID of allTransactionsIDs) {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
-                    let txHash
+                    let txHash = "0x00" // TODO: how to get this one
 
-                    const btcAdr = await this.getBtcAdr(txID);
+                    const btcAdr = await this.getPayment(txHash, txID);
                     if (!this.verifyPaymentAdr(btcAdr)) {
                         console.error("Wrong btc address");
                     }
@@ -96,13 +96,25 @@ class MainController {
     }
 
     //todo: add err check
-    getBtcAdr(txId) {
-        const p = this;
-        return new Promise(resolve => {
-            p.socket.emit("getBtcAdr", txId, (btcAdr) => {
-                resolve(btcAdr);
-            });
-        });
+    async getPayment(txHash, txId) {
+        const p = {
+            signedMessage: this.signed.signature,
+            message: this.signed.message,
+            walletAddress: conf.account.adr,
+            txHash,
+            txId
+        };
+        try {
+            const resp = await axios.post(conf.masterNode + "getBtcAdr", p); // TODO: rename to getPayment
+            console.log(resp.data);
+
+            console.log("The BTC address is " + resp.data);
+            return resp.data
+        } catch (err) {
+            // Handle Error Here
+            console.error("error on getting deposit BTC address");
+            console.error(err);
+        }
     }
 
     async verifyDeposit() {
