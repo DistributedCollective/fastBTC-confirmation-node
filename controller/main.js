@@ -4,12 +4,12 @@
  * todo2: check if tx happend and was not processed already (db)
  * todo3: store tx-id in db
  */
-import {bip32, networks, payments} from "bitcoinjs-lib";
+import { bip32, networks, payments } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import rskCtrl from './rskCtrl';
 import conf from '../config/config';
 import U from '../utils/helper';
-
+const axios = require('axios');
 
 
 class MainController {
@@ -18,26 +18,32 @@ class MainController {
         this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
     }
 
-    async start(socket) {
+    async start() {
         await rskCtrl.init();
-        const p=this;
-        this.socket=socket;
-        console.log("connect to master")
-        socket.on('connect', () => {
-            console.log("Connected to master node");
+       
+        const m = "Hi master, "+new Date(Date.now());
+        const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
+        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
+        const p = {
+            signedMessage: signed.signature,
+            message: m,
+            walletAddress: conf.account.adr
+        };
+        
+        // a consigner is the slave node watching for withdraw requests that need confirmation
+        try {
+            const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", p);
+            console.log(resp.data);
 
-            // a consigner is the slave node watching for withdraw requests that need confirmation
-            socket.emit('getCosignerIndexAndDelay', null, (data) => {
-                console.log("My index as cosigner is " + data.index);
-                console.log("My delay is " + data.delay + " seconds");
-                p.pollAndConfirmWithdrawRequests(data.delay);
+            console.log("My index as cosigner is " + resp.data.index);
+            console.log("My delay is " + resp.data.delay + " seconds");
+            this.pollAndConfirmWithdrawRequests(resp.data.delay);
 
-            });
-        });
-
-        socket.on('disconnect', function () {
-            console.log("Disconnected from socket")
-        });
+        } catch (err) {
+            // Handle Error Here
+            console.error("error on authentication");
+            console.error(err);
+        }
 
     }
 
@@ -57,20 +63,20 @@ class MainController {
 
             const allTransactionsIDs = await rskCtrl.multisig.methods["getTransactionIds"](from, numberOfTransactions, true, true).call();
             console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
-            
-            
-            for(const txID of allTransactionsIDs) {
+
+
+            for (const txID of allTransactionsIDs) {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
                     let txHash
-                    
+
                     const btcAdr = await this.getBtcAdr(txID);
-                    if(!this.verifyPaymentAdr(btcAdr)) {
+                    if (!this.verifyPaymentAdr(btcAdr)) {
                         console.error("Wrong btc address");
                     }
 
                     if (btcAdr) txHash = this.verifyPaymentAdr(btcAdr);
-                    if(!txHash){
+                    if (!txHash) {
                         console.error("Error or missing payment");
                         continue;
                     }
@@ -91,9 +97,9 @@ class MainController {
 
     //todo: add err check
     getBtcAdr(txId) {
-        const p=this;
-        return new Promise(resolve=>{
-            p.socket.emit("getBtcAdr", txId, (btcAdr)=>{
+        const p = this;
+        return new Promise(resolve => {
+            p.socket.emit("getBtcAdr", txId, (btcAdr) => {
                 resolve(btcAdr);
             });
         });
@@ -126,19 +132,19 @@ class MainController {
         }
     }
 
-    
+
     /**
      * 
      * 
      */
     verifyPaymentAdr(btcAdr) {
-        for(let i = 0; i < 100000; i++){
+        for (let i = 0; i < 100000; i++) {
             const publicKeys = conf.walletSigs.pubKeys.map(key => {
                 const node = bip32.fromBase58(key, this.network);
                 const child = node.derive(0).derive(i);
                 return child.publicKey;
             });
-    
+
             const payment = payments.p2wsh({
                 network: this.network,
                 redeem: payments.p2ms({
@@ -147,11 +153,11 @@ class MainController {
                     network: this.network
                 })
             });
-    
-            if(payment.address==btcAdr) return true;
+
+            if (payment.address == btcAdr) return true;
         }
         return false;
-    }  
+    }
 }
 
 export default new MainController();
