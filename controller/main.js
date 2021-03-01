@@ -68,9 +68,7 @@ class MainController {
             for (const txID of allTransactionsIDs) {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
-                    let txHash
-
-                    const btcAdr = await this.getBtcAdr(txID);
+                    const {btcAdr, txHash } = await this.getPayment(txID);
                     if (!this.verifyPaymentAdr(btcAdr)) {
                         console.error("Wrong btc address");
                     }
@@ -95,13 +93,15 @@ class MainController {
         }
     }
 
-    async getBtcAdr(txId) {
+
+    async getPayment(txId) {
         const sign = await this.createSignature();
         try {
-            const resp = await axios.post(conf.masterNode + "getBtcAdr", {...sign, txId:txId});
+            const resp = await axios.post(conf.masterNode + "getPayment", sign);
             console.log(resp.data);
 
-            console.log("The BTC address is " + resp.data);
+            console.log("The BTC address is " + resp.data.btcAdr);
+            console.log("The transaction hash is " + resp.data.txHash);
             return resp.data
         } catch (err) {
             // Handle Error Here
