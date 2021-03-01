@@ -24,9 +24,9 @@ class MainController {
        
         const m = "Hi master, "+new Date(Date.now());
         const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
-        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
+        this.signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
         const p = {
-            signedMessage: signed.signature,
+            signedMessage: this.signed.signature,
             message: m,
             walletAddress: conf.account.adr
         };
@@ -97,8 +97,14 @@ class MainController {
     }
 
     async getBtcAdr(txId) {
+        const p = {
+            signedMessage: this.signed.signature,
+            message: this.signed.message,
+            walletAddress: conf.account.adr,
+            txId
+        };
         try {
-            const resp = await axios.post(conf.masterNode + "getBtcAdr", txId);
+            const resp = await axios.post(conf.masterNode + "getBtcAdr", p);
             console.log(resp.data);
 
             console.log("The BTC address is " + resp.data);
