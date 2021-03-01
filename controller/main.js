@@ -105,7 +105,8 @@ class MainController {
             const resp = await axios.post(conf.masterNode + "getPayment", p);
             console.log(resp.data);
 
-            console.log("The BTC address is " + resp.data);
+            console.log("The BTC address is " + resp.data.btcAdr);
+            console.log("The transaction hash is " + resp.data.txHash);
             return resp.data
         } catch (err) {
             // Handle Error Here
