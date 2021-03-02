@@ -138,32 +138,7 @@ class MainController {
         }
     }
 
-    async verifyDeposit() {
-        const txList = await this.api.listReceivedTxsByLabel(adrLabel, 9999);
-
-        // console.log("Address label %s has %s tx", adrLabel, (txList||[]).length);
-
-        for (const tx of (txList || [])) {
-            const confirmations = tx && tx.confirmations;
-
-            if (confirmations === 0) {
-                await this.addPendingDepositTx({
-                    address: tx.address,
-                    value: tx.value,
-                    txId: tx.txId,
-                    label: adrLabel
-                });
-            } else if (confirmations >= this.thresholdConfirmations) {
-                await this.depositTxConfirmed({
-                    address: tx.address,
-                    value: tx.value,
-                    txId: tx.txId,
-                    confirmations: confirmations,
-                    label: adrLabel
-                });
-            }
-        }
-    }
+   
 
 
     /**
