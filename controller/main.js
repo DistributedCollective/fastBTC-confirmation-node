@@ -85,12 +85,16 @@ class MainController {
                     */
 
                     await U.wasteTime(delay);
+
                     if (verification) {
                         await rskCtrl.confirmWithdrawRequest(txID);
                         console.log(isConfirmed + "\n 'from' is now " + txID)
                         from = txID
                     }
+
                 }
+                from = txID
+                console.log("'from' is now " + txID)
             }
             await U.wasteTime(5);
         }
