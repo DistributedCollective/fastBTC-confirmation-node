@@ -7,7 +7,7 @@ export default {
     nodeId: 2, //every node gets a unique id
     masterNode: '', // add me
     rskNodeProvider: 'https://mainnet.sovryn.app/rpc',
-    btcNodeProvider: btcNode.main,
+    btcNodeProvider: {},
     network: "main",
     db: "node_mainnet.db",
     multisigAddress: "",
