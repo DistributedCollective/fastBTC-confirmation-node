@@ -20,11 +20,16 @@ export default async function getCosigners() {
         inputs: []
     }, []);
 
-    const cosigners = await rskCtrl.multisig.methods.submitTransaction(conf.multisigAddress, 0, data).send({
-        from: conf.account.adr,
-        gas: 100000
-    });
-
-    console.log("Cosigners are", cosigners);
-    return cosigners;
+    try {
+        const cosigners = await rskCtrl.multisig.methods.submitTransaction(conf.multisigAddress, 0, data).send({
+            from: conf.account.adr,
+            gas: 100000
+        });
+    
+        console.log("\nCosigners are", cosigners);
+        return cosigners;
+    } catch (e) {
+        console.log("\nError getting cosigners")
+        return null;
+    }
 }
