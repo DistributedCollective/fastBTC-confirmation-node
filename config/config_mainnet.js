@@ -1,6 +1,5 @@
 import telegramBot from '../secrets/telegram.js';
 import walletSigs from '../secrets/walletSigs.main';
-import btcNode from '../secrets/btcNode';
 import accounts from "../secrets/accounts";
 
 export default {
