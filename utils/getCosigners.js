@@ -8,19 +8,20 @@ const from ={
 
 
 export default async function getCosigners() {
-    console.log("Getting Cosigners.\n Initializing RSK");
+    console.log("Getting Cosigners.\nInitializing RSK");
     await rskCtrl.init();
 
-    const pKey = rskCtrl.web3.eth.accounts.decrypt(from.ks, process.argv[3]).privateKey;
+    const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
     rskCtrl.web3.eth.accounts.wallet.add(pKey);
 
-    this.web3.eth.abi.encodeFunctionCall({
+    const data = rskCtrl.web3.eth.abi.encodeFunctionCall({
         name: 'getOwners',
         type: 'function',
-    });
+        inputs: []
+    }, []);
 
-    const cosigners = await rskCtrl.multisig.methods.submitTransaction(conf.contractAddress, 0, data).send({
-        from: from.adr,
+    const cosigners = await rskCtrl.multisig.methods.submitTransaction(conf.multisigAddress, 0, data).send({
+        from: conf.account.adr,
         gas: 100000
     });
 
