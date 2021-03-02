@@ -1,10 +1,5 @@
 import rskCtrl from '../controller/rskCtrl';
 
-const from ={
-    adr: "",
-    pKey: ""
-};
-
 
 export default async function getCosigners() {
     console.log("Getting Cosigners.\nInitializing RSK");
