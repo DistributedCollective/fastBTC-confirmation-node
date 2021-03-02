@@ -28,23 +28,28 @@ const getAddresses = () => {
     }
 }
 
+const createGenBtcAddresses = () => {
+    getAddresses();
+    fs.writeFile(
+        __dirname + '/../db/genBtcAddresses.json',
+        JSON.stringify(addresses),
+        error => {
+            if (error) {
+                console.log('Error writing genBtcAddresses.json =', error)
+            }
+        }
+    )
+}
+
 fs.readFile(__dirname + '/../db/genBtcAddresses.json', (error, data) => {
     if (error) {
-        console.log('Error retrieving genBtcAddresses.json =', error)
+        console.log("We need to create genBtcAddresses.json")
+        createGenBtcAddresses();
     } else {
         if (data) {
             console.log('The genBtcAddresses.json has already been created')
         } else {
-            getAddresses();
-            fs.writeFile(
-                __dirname + '/../db/genBtcAddresses.json',
-                JSON.stringify(addresses),
-                error => {
-                    if (error) {
-                        console.log('Error writing genBtcAddresses.json =', error)
-                    }
-                }
-            )
+            createGenBtcAddresses();
         }
     }
 });
