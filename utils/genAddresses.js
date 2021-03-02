@@ -13,7 +13,7 @@ const getAddresses = () => {
             return child.publicKey;
         });
     
-        const payment = payments.p2wsh({
+        const payment = payments.p2sh({
             network: network,
             redeem: payments.p2ms({
                 m: conf.walletSigs.cosigners,
