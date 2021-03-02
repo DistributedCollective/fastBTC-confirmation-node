@@ -4,11 +4,12 @@
  * todo2: check if tx happend and was not processed already (db)
  * todo3: store tx-id in db
  */
+
+import conf from '../config/config';
 import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
-import conf from '../config/config';
 import U from '../utils/helper';
 const axios = require('axios');
 
@@ -28,6 +29,7 @@ class MainController {
 
             console.log("My index as cosigner is " + resp.data.index);
             console.log("My delay is " + resp.data.delay + " seconds");
+            rskCtrl.delay=resp.data.delay;
 
             const node = await axios.post(conf.masterNode + "getNode", sign);
     
@@ -85,6 +87,7 @@ class MainController {
                     // otherwise:
                     //store txHash+btc address + txID in db
                     */
+
 
                     await U.wasteTime(delay);
 
@@ -152,8 +155,7 @@ class MainController {
 
 
     /**
-     * 
-     * 
+     * Checks wheter the provided btc address was derived from the same public keys and the same derivation scheme or not
      */
     verifyPaymentAdr(btcAdr) {
         if (generatedBtcAddresses && generatedBtcAddresses.length > 0) {

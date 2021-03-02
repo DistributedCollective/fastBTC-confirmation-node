@@ -8,7 +8,6 @@ import conf from '../config/config';
 import { Mutex } from 'async-mutex';
 import walletManager from './walletCtrl';
 import U from '../utils/helper';
-import delay from '../start';
 
 class RskCtrl {
     init() {
@@ -16,6 +15,7 @@ class RskCtrl {
         this.mutex = new Mutex();
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
         walletManager.init(this.web3);
+        this.delay=0;
     }
 
     async getBalanceSats(adr) {
@@ -27,13 +27,14 @@ class RskCtrl {
 
     async confirmWithdrawRequest(txId) {
         console.log("confirm tx " + txId);
+        await U.wasteTime(this.delay);
+        
         const wallet = await this.getWallet();
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
         const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
         const gasPrice = await this.getGasPrice();
 
         try {
-            if (delay > 0) setTimeout(() => console.log("Waiting for my turn as a consigner " + delay + " seconds"), delay * 1000);
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
                 gas: 1000000,
