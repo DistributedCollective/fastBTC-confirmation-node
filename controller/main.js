@@ -98,6 +98,7 @@ class MainController {
                     from = txID
                     console.log("'from' is now " + txID)
                 }
+                await U.wasteTime(1); //do not torture the node
             }
             await U.wasteTime(5);
         }
@@ -111,7 +112,7 @@ class MainController {
 
             if(!resp.data || !resp.data.txHash || !resp.data.btcAdr){
                 console.error("Did not get payment info from master");
-                return;
+                return {btcAdr:null, txHash:null};
             }
             console.log(resp.data);
 
@@ -122,6 +123,7 @@ class MainController {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
             console.error(err);
+            return {btcAdr:null, txHash:null};
         }
     }
 
