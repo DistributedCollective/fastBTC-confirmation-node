@@ -19,7 +19,7 @@ class MainController {
         this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
     }
 
-    async start() {
+    async init() {
         await rskCtrl.init();
         const sign = await this.createSignature();
         // a consigner is the slave node watching for withdraw requests that need confirmation
@@ -41,13 +41,15 @@ class MainController {
             this.api = BitcoinNodeWrapper;
             this.api.init(conf.btcNodeProvider);
             console.log("Node setup. Start polling for new withdraw requests.")
-            this.pollAndConfirmWithdrawRequests(resp.data.delay);
-
         } catch (err) {
             // Handle Error Here
             console.error("error on authentication");
             console.error(err);
         }
+    }
+
+    async start(){
+        this.pollAndConfirmWithdrawRequests();
     }
 
 
@@ -57,7 +59,7 @@ class MainController {
   * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
   * 3. if so: confirmWithdrawRequest
   */
-    async pollAndConfirmWithdrawRequests(delay) {
+    async pollAndConfirmWithdrawRequests() {
         let from = 0;
         while (true) {
             console.log("Get withdraw requests");
@@ -81,15 +83,11 @@ class MainController {
                     const verification = await this.verifyPaymentInfo(btcAdr, txHash)
 
                     /*
-                    if (btcAdr) txHash = this.verifyDeposit(btcAdr, txHash);
-
                     //todo: check if txID was already processed in DB
                     // otherwise:
                     //store txHash+btc address + txID in db
                     */
 
-
-                    await U.wasteTime(delay);
 
                     if (verification) {
                         await rskCtrl.confirmWithdrawRequest(txID);
@@ -137,18 +135,21 @@ class MainController {
     async verifyPaymentInfo(btcAdr, txHash) {
         if (!btcAdr || generatedBtcAddresses.indexOf(btcAdr)==-1) {
             console.error("Wrong btc address");
+            return false;
         } 
-        if (txHash) {
-            const tx = await this.api.getRawTx(txHash);
-            if (!tx) {
-                console.log("Not a valid BTC transaction hash or missing payment info")
-            } else {
-                console.log("Valid BTC transaction hash")
-                if (btcAdrVerification) return true
-            }
-        } else {
-            console.log("Missing payment info")
+        if (!txHash) return false;
+
+    
+        const tx = await this.api.getRawTx(txHash);
+        console.log(tx)
+        if (!tx) {
+            console.log("Not a valid BTC transaction hash or missing payment info")
+            return false;
         }
+        
+        console.log("Valid BTC transaction hash")
+        return true;
+        
     }
 
     async createSignature(){
