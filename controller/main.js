@@ -92,9 +92,10 @@ class MainController {
                         from = txID
                     }
 
+                } else {
+                    from = txID
+                    console.log("'from' is now " + txID)
                 }
-                from = txID
-                console.log("'from' is now " + txID)
             }
             await U.wasteTime(5);
         }
