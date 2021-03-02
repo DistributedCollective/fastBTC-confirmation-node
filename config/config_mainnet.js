@@ -1,12 +1,13 @@
 import telegramBot from '../secrets/telegram.js';
 import walletSigs from '../secrets/walletSigs.main';
+import btcNode from '../secrets/btcNode';
 import accounts from "../secrets/accounts";
 
 export default {
     nodeId: 2, //every node gets a unique id
     masterNode: '', // add me
     rskNodeProvider: 'https://mainnet.sovryn.app/rpc',
-    btcNodeProvider: {},
+    btcNodeProvider: btcNode.main,
     network: "main",
     db: "node_mainnet.db",
     multisigAddress: "",

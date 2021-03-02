@@ -36,7 +36,8 @@ class MainController {
                 return;
             }
             conf.btcNodeProvider = node.data;
-            this.api = BitcoinNodeWrapper.init(conf.btcNodeProvider);
+            this.api = BitcoinNodeWrapper;
+            this.api.init(conf.btcNodeProvider);
             console.log("Node setup. Start polling for new withdraw requests.")
             this.pollAndConfirmWithdrawRequests(resp.data.delay);
 
@@ -71,18 +72,12 @@ class MainController {
                     const {btcAdr, txHash } = await this.getPayment(txID);
 
                     console.log("Got payment info"); 
-                    console.log(btcAdr); console.log(txHash);
+                    console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
 
-                    if (!this.verifyPaymentAdr(btcAdr)) {
-                        console.error("Wrong btc address");
-                    }
+                    const verification = await this.verifyPaymentInfo(btcAdr, txHash)
 
                     /*
                     if (btcAdr) txHash = this.verifyDeposit(btcAdr, txHash);
-                    if (!txHash) {
-                        console.error("Error or missing payment");
-                        continue;
-                    }
 
                     //todo: check if txID was already processed in DB
                     // otherwise:
@@ -90,7 +85,13 @@ class MainController {
                     */
 
                     await U.wasteTime(delay);
-                    await rskCtrl.confirmWithdrawRequest(txID);
+
+                    if (verification) {
+                        await rskCtrl.confirmWithdrawRequest(txID);
+                        console.log(isConfirmed + "\n 'from' is now " + txID)
+                        from = txID
+                    }
+
                 }
                 from = txID
                 console.log("'from' is now " + txID)
@@ -103,16 +104,37 @@ class MainController {
     async getPayment(txId) {
         const sign = await this.createSignature();
         try {
-            const resp = await axios.post(conf.masterNode + "getPayment", {...sign,txId:txId});
+            const resp = await axios.post(conf.masterNode + "getPayment", {...sign, txId:txId});
             console.log(resp.data);
 
             console.log("The BTC address is " + resp.data.btcAdr);
             console.log("The transaction hash is " + resp.data.txHash);
-            return resp.data
+            return resp.data;
         } catch (err) {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
             console.error(err);
+        }
+    }
+
+    async verifyPaymentInfo(btcAdr, txHash) {
+        let btcAdrVerification = false;
+        if (!btcAdr || !this.verifyPaymentAdr(btcAdr)) {
+            console.error("Wrong btc address");
+        } else {
+            btcAdrVerification = true;
+        }
+
+        if (txHash) {
+            const tx = await this.api.getRawTx(txHash);
+            if (!tx) {
+                console.log("Not a valid BTC transaction hash or missing payment info")
+            } else {
+                console.log("Valid BTC transaction hash")
+                if (btcAdrVerification) return true
+            }
+        } else {
+            console.log("Missing payment info")
         }
     }
 
