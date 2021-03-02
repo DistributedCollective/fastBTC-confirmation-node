@@ -71,6 +71,8 @@ class MainController {
                 if (!isConfirmed) {
                     const {btcAdr, txHash } = await this.getPayment(txID);
 
+                    if(!btcAdr  || !txHash) continue;
+
                     console.log("Got payment info"); 
                     console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
 
@@ -106,6 +108,11 @@ class MainController {
         const sign = await this.createSignature();
         try {
             const resp = await axios.post(conf.masterNode + "getPayment", {...sign, txId:txId});
+
+            if(!resp.data || !resp.data.txHash || !resp.data.btcAdr){
+                console.error("Did not get payment info from master");
+                return;
+            }
             console.log(resp.data);
 
             console.log("The BTC address is " + resp.data.btcAdr);
