@@ -130,14 +130,14 @@ class MainController {
         }
     }
 
+    /**
+     * Checks wheter the provided btc address was derived from the same public keys and the same derivation scheme or not
+     * tx..
+     */
     async verifyPaymentInfo(btcAdr, txHash) {
-        let btcAdrVerification = false;
-        if (!btcAdr || !this.verifyPaymentAdr(btcAdr)) {
+        if (!btcAdr || generatedBtcAddresses.indexOf(btcAdr)==-1) {
             console.error("Wrong btc address");
-        } else {
-            btcAdrVerification = true;
-        }
-
+        } 
         if (txHash) {
             const tx = await this.api.getRawTx(txHash);
             if (!tx) {
@@ -149,21 +149,6 @@ class MainController {
         } else {
             console.log("Missing payment info")
         }
-    }
-
-   
-
-
-    /**
-     * Checks wheter the provided btc address was derived from the same public keys and the same derivation scheme or not
-     */
-    verifyPaymentAdr(btcAdr) {
-        if (generatedBtcAddresses && generatedBtcAddresses.length > 0) {
-            generatedBtcAddresses.find((address) => {
-                if(address==btcAdr) return true;
-            })
-        }
-        return false;
     }
 
     async createSignature(){
