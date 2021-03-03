@@ -5,13 +5,22 @@ const fs = require('fs')
 const addresses = []
 const network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
 
+
+function getDerivedPubKeys(pubKeys, index) {
+    let publicKeys = pubKeys.map(key => {
+        const node = bip32.fromBase58(key, network);
+        const child = node.derive(0).derive(index);
+        return child.publicKey.toString('hex');
+    });
+    publicKeys.sort();
+    publicKeys = publicKeys.map(k => Buffer.from(k, 'hex'));
+    return publicKeys;
+}
+
+
 const getAddresses = () => {
     for(let i = 0; i < 10000; i++){
-        const publicKeys = conf.walletSigs.pubKeys.map(key => {
-            const node = bip32.fromBase58(key, network);
-            const child = node.derive(0).derive(i);
-            return child.publicKey;
-        });
+        const publicKeys = getDerivedPubKeys(conf.walletSigs.pubKeys, i);
     
         const payment = payments.p2sh({
             network: network,
@@ -24,7 +33,9 @@ const getAddresses = () => {
 
         addresses.push(payment.address)
     }
+    console.log(addresses)
 }
+
 
 const createGenBtcAddresses = () => {
     getAddresses();

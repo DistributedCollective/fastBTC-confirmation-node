@@ -41,8 +41,9 @@ class RskCtrl {
                 gasPrice: gasPrice,
                 nonce: nonce
             });
+            
             if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
-
+            console.log(receipt);
             walletManager.decreasePending(wallet);
             return receipt;
         } catch (err) {

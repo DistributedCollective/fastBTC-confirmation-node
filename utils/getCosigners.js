@@ -6,7 +6,7 @@ export default async function getCosigners() {
     await rskCtrl.init();
 
     try {
-        const cosigners = await rskCtrl.multisig.methods["getOwners"]().call()
+        const cosigners = await rskCtrl.multisig.methods["getOwners"]().call();
     
         console.log("\nCosigners are", cosigners);
         return cosigners;
@@ -15,3 +15,5 @@ export default async function getCosigners() {
         return null;
     }
 }
+
+getCosigners();
