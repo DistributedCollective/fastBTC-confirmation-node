@@ -132,6 +132,17 @@ class MainController {
     }
 
     /**
+     * Checks whether the provided timestamp is older than one hour ago. If older, returns false
+     */
+    verifyTxTimestamp(timestamp) {
+        const HOUR = 1000 * 60 * 60;
+        const anHourAgo = Date.now() - HOUR;
+        if ((timestamp * 1000) <= anHourAgo)
+            console.log("Transaction has expired. Older than one hour")
+            return false;
+    }
+
+    /**
      * Checks wheter the provided btc address was derived from the same public keys and the same derivation scheme or not
      * tx..
      */
@@ -142,17 +153,17 @@ class MainController {
         } 
         if (!txHash) return false;
 
-    
         const tx = await this.api.getRawTx(txHash);
-        console.log(tx)
         if (!tx) {
             console.log("Not a valid BTC transaction hash or missing payment info")
             return false;
         }
-        
-        console.log("Valid BTC transaction hash")
-        return true;
-        
+        console.log(tx)
+        // check if the transaction is older than 1h
+        if (this.verifyTxTimestamp(tx.timestamp)) {
+            console.log("Valid BTC transaction hash")
+            return true;
+        }
     }
 
     async createSignature(){

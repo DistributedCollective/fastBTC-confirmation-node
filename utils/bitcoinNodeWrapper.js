@@ -110,18 +110,9 @@ class BitcoinNodeWrapper {
         }
     }
 
-    verifyTxTimestamp(timestamp) {
-        const HOUR = 1000 * 60 * 60;
-        const anHourAgo = Date.now() - HOUR;
-        if ((timestamp * 1000) <= anHourAgo)
-            throw new Error("Transaction has expired. Older than one hour")
-    }
-
     async getRawTx(txId) {
         try {
             const res = await this.call("gettransaction", [txId, true]);
-            // check if the transaction is older than 1h
-            this.verifyTxTimestamp(res.time);
 
             if (res) {
                 const vout = (res.details || []).map(el => {
@@ -134,6 +125,7 @@ class BitcoinNodeWrapper {
 
                 return {
                     hex: res.hex,
+                    timestamp: res.time,
                     confirmations: res.confirmations,
                     value: Number(res.amount) * 1e8,
                     vout: vout
