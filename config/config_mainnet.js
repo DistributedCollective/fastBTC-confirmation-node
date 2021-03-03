@@ -9,7 +9,7 @@ export default {
     btcNodeProvider: {},
     network: "main",
     db: "node_mainnet.db",
-    multisigAddress: "",
+    multisigAddress: "0xeb8d632089F84A5A7E09456e4aB063364c5ebc5c",
     walletSigs,
     startIndex: 0, //tx-index
     account: accounts["main"],
