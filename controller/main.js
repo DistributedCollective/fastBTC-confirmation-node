@@ -75,7 +75,10 @@ class MainController {
                 if (!isConfirmed) {
                     const {btcAdr, txHash } = await this.getPayment(txID);
 
-                    if(!btcAdr  || !txHash) continue;
+                    if(!btcAdr  || !txHash) {
+                        from = txID
+                        continue;
+                    }
 
                     console.log("Got payment info"); 
                     console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
@@ -123,7 +126,7 @@ class MainController {
         } catch (err) {
             // Handle Error Here
             console.error("error on getting deposit BTC address");
-            console.error(err);
+            //console.error(err);
             return {btcAdr:null, txHash:null};
         }
     }
