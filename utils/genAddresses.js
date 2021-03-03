@@ -22,8 +22,6 @@ const getAddresses = () => {
             })
         });
 
-        
-    
         addresses.push(payment.address)
     }
 }
