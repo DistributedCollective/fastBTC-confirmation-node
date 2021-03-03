@@ -11,7 +11,7 @@ export default {
     db: "node_mainnet.db",
     multisigAddress: "",
     walletSigs,
-    startBlock: 3000000,
+    startIndex: 0, //tx-index
     account: accounts["main"],
     blockExplorer: "https://explorer.rsk.co",
     sovrynInternalTelegramId: -0, // add me
