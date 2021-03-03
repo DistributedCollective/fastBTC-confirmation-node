@@ -48,10 +48,6 @@ class MainController {
         }
     }
 
-    async start(){
-        this.pollAndConfirmWithdrawRequests();
-    }
-
 
     /**
   * Create inifinite loop
@@ -71,6 +67,8 @@ class MainController {
 
 
             for (const txID of allTransactionsIDs) {
+                if(txID<conf.startIndex) continue;
+
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
                     const {btcAdr, txHash } = await this.getPayment(txID);
@@ -143,8 +141,11 @@ class MainController {
     }
 
     /**
-     * Checks wheter the provided btc address was derived from the same public keys and the same derivation scheme or not
-     * tx..
+     * Checks wheter
+     * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
+     * 2. the tx hash is valid
+     * 3. timestamp < 1h (pull)
+     * 4. todo: btc deposit address match
      */
     async verifyPaymentInfo(btcAdr, txHash) {
         if (!btcAdr || generatedBtcAddresses.indexOf(btcAdr)==-1) {

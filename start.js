@@ -10,7 +10,7 @@ console.log("Hola. Starting confirmation node on "+conf.network);
 
 async function start(){
     await MainCtrl.init();
-    MainCtrl.start();
+    MainCtrl.pollAndConfirmWithdrawRequests();
 }
 
 start();

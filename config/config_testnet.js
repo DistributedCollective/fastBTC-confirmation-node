@@ -11,7 +11,7 @@ export default {
     db: "node_testnet.db",
     multisigAddress: "0x1D67BDA1144CacDbEFF1782f0E5B43D7B50bbFe0".toLowerCase(),
     walletSigs,
-    startBlock: 1000000,
+    startIndex: 130, //tx-index
     account: accounts["test"],
     blockExplorer: "https://explorer.testnet.rsk.co",
     sovrynInternalTelegramId: -523868176,

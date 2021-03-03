@@ -9,9 +9,9 @@ export default {
     btcNodeProvider: {},
     network: "main",
     db: "node_mainnet.db",
-    multisigAddress: "",
+    multisigAddress: "0xeb8d632089F84A5A7E09456e4aB063364c5ebc5c",
     walletSigs,
-    startBlock: 3000000,
+    startIndex: 0, //tx-index
     account: accounts["main"],
     blockExplorer: "https://explorer.rsk.co",
     sovrynInternalTelegramId: -0, // add me
