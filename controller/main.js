@@ -48,10 +48,6 @@ class MainController {
         }
     }
 
-    async start(){
-        this.pollAndConfirmWithdrawRequests();
-    }
-
 
     /**
   * Create inifinite loop
