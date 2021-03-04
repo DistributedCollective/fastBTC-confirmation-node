@@ -88,8 +88,6 @@ class MainController {
                     // otherwise:
                     //store txHash+btc address + txId in db
                     */
-                    console.log('\nTXID OF DEVIL', txId)
-                    console.log('\nTRANSACTION OF DEVIL', tx)
 
                     if (verification) {
                         await rskCtrl.confirmWithdrawRequest(txId);
