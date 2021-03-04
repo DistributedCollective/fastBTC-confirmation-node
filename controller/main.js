@@ -130,17 +130,6 @@ class MainController {
     }
 
     /**
-     * Checks whether the provided timestamp is older than one hour ago. If older, returns false
-     */
-    verifyTxTimestamp(timestamp) {
-        const HOUR = 1000 * 60 * 60;
-        const anHourAgo = Date.now() - HOUR;
-        if ((timestamp * 1000) <= anHourAgo)
-            console.log("Transaction has expired. Older than one hour")
-            return false;
-    }
-
-    /**
      * Checks wheter
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
      * 2. the tx hash is valid
@@ -160,8 +149,8 @@ class MainController {
             return false;
         }
         console.log(tx)
-        // check if the transaction is older than 1h
-        if (this.verifyTxTimestamp(tx.timestamp)) {
+        // che<ck if the transaction is older than 1h
+        if (U.verifyTxTimestamp(tx.timestamp)) {
             console.log("Valid BTC transaction hash")
             return true;
         }
