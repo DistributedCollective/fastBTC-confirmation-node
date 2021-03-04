@@ -92,7 +92,7 @@ class MainController {
 
                     if (verification) {
                         await rskCtrl.confirmWithdrawRequest(txID);
-                        await storeWithdrawRequest(user, tx, txID);
+                        await this.storeWithdrawRequest(user, tx, txID);
                         from = txID
                         console.log(isConfirmed + "\n 'from' is now " + txID)
                     }
@@ -169,10 +169,11 @@ class MainController {
         };
     }
 
-    async storeWithdrawRequest(user, tx, txId) {
+    async storeWithdrawRequest(user, tx, txId, sign) {
         try {
-            await axios.post(conf.masterNode + "storeWithdrawRequest", { user, tx, txId });
+            await axios.post(conf.masterNode + "storeWithdrawRequest", { user, tx, txId, ...sign });
             console.log("Withdraw request succesfully stored in the master node")
+            return true;
         } catch (e) {
             console.log(e)
             return null;
