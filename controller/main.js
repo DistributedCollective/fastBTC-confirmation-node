@@ -71,17 +71,17 @@ class MainController {
 
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
-                    const {btcAdr, txHash } = await this.getPayment(txID);
+                    const { user, tx } = await this.getPayment(txID);
 
-                    if(!btcAdr  || !txHash) {
+                    if(!user || !tx) {
                         from = txID
                         continue;
                     }
 
                     console.log("Got payment info"); 
-                    console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
+                    console.log("BTC address is", user.btcAdr); console.log("Transaction hash is", tx.txHash);
 
-                    const verification = await this.verifyPaymentInfo(btcAdr, txHash)
+                    const verification = await this.verifyPaymentInfo(user.btcAdr, tx.txHash)
 
                     /*
                     //todo: check if txID was already processed in DB
@@ -92,8 +92,9 @@ class MainController {
 
                     if (verification) {
                         await rskCtrl.confirmWithdrawRequest(txID);
-                        console.log(isConfirmed + "\n 'from' is now " + txID)
+                        await storeWithdrawRequest(user, tx);
                         from = txID
+                        console.log(isConfirmed + "\n 'from' is now " + txID)
                     }
 
                 } else {
@@ -112,14 +113,14 @@ class MainController {
         try {
             const resp = await axios.post(conf.masterNode + "getPayment", {...sign, txId:txId});
 
-            if(!resp.data || !resp.data.txHash || !resp.data.btcAdr){
+            if(!resp.data || !resp.data.tx || !resp.data.user){
                 console.error("Did not get payment info from master");
                 return {btcAdr:null, txHash:null};
             }
             console.log(resp.data);
 
-            console.log("The BTC address is " + resp.data.btcAdr);
-            console.log("The transaction hash is " + resp.data.txHash);
+            console.log("The BTC address is " + resp.data.user.btcAdr);
+            console.log("The transaction hash is " + resp.data.tx.txHash);
             return resp.data;
         } catch (err) {
             // Handle Error Here
@@ -166,6 +167,17 @@ class MainController {
             message: m,
             walletAddress: conf.account.adr
         };
+    }
+
+    async storeWithdrawRequest(user, tx) {
+        try {
+            await axios.post(conf.masterNode + "storeWithdrawRequest", { user, tx, txId: txID});
+            console.log("Withdraw request succesfully stored in the master node")
+        } catch (e) {
+            console.log(e)
+            return null;
+        }
+
     }
 }
 
