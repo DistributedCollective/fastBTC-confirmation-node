@@ -66,15 +66,15 @@ class MainController {
             console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
 
 
-            for (const txID of allTransactionsIDs) {
-                if(txID<conf.startIndex) continue;
+            for (const txId of allTransactionsIDs) {
+                if(txId<conf.startIndex) continue;
 
-                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
+                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
                 if (!isConfirmed) {
-                    const { user, tx } = await this.getPayment(txID);
+                    const { user, tx } = await this.getPayment(txId);
 
                     if(!user || !tx) {
-                        from = txID
+                        from = txId
                         continue;
                     }
 
@@ -84,22 +84,23 @@ class MainController {
                     const verification = await this.verifyPaymentInfo(user.btcAdr, tx.txHash)
 
                     /*
-                    //todo: check if txID was already processed in DB
+                    //todo: check if txId was already processed in DB
                     // otherwise:
-                    //store txHash+btc address + txID in db
+                    //store txHash+btc address + txId in db
                     */
-
+                    console.log('\nTXID OF DEVIL', txId)
+                    console.log('\nTRANSACTION OF DEVIL', tx)
 
                     if (verification) {
-                        await rskCtrl.confirmWithdrawRequest(txID);
-                        await this.storeWithdrawRequest(user, tx, txID);
-                        from = txID
-                        console.log(isConfirmed + "\n 'from' is now " + txID)
+                        await rskCtrl.confirmWithdrawRequest(txId);
+                        await this.storeWithdrawRequest(user, tx, txId);
+                        from = txId
+                        console.log(isConfirmed + "\n 'from' is now " + txId)
                     }
 
                 } else {
-                    from = txID
-                    console.log("'from' is now " + txID)
+                    from = txId
+                    console.log("'from' is now " + txId)
                 }
                 await U.wasteTime(1); //do not torture the node
             }
