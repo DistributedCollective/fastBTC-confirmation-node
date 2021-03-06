@@ -3,7 +3,7 @@ import conf from '../config/config';
 const fs = require('fs')
 
 const addresses = []
-const network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
+const network = conf.network === 'main' ? networks.bitcoin : networks.testnet;
 
 
 function getDerivedPubKeys(pubKeys, index) {
@@ -19,7 +19,7 @@ function getDerivedPubKeys(pubKeys, index) {
 
 
 const getAddresses = () => {
-    for(let i = 0; i < 10000; i++){
+    for(let i = 0; i < 100000; i++){
         const publicKeys = getDerivedPubKeys(conf.walletSigs.pubKeys, i);
     
         const payment = payments.p2sh({
