@@ -18,23 +18,19 @@ class RskCtrl {
         this.delay=0;
     }
 
-    async getBalanceSats(adr) {
-        const balWei = await this.web3.eth.getBalance(adr);
-        const balBtc = this.web3.utils.fromWei(balWei, 'ether');
-        return Number(balBtc) * 1e8;
-    }
-
-
     async confirmWithdrawRequest(txId) {
         console.log("confirm tx " + txId);
         await U.wasteTime(this.delay);
         
         const wallet = await this.getWallet();
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
-        const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
-        const gasPrice = await this.getGasPrice();
-
+       
         try {
+            const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
+            const gasPrice = await this.getGasPrice();
+    
+            if(!nonce || !gasPrice) return false;
+    
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
                 gas: 1000000,

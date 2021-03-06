@@ -54,55 +54,75 @@ class MainController {
   * 1. get tx-id#s
   * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
   * 3. if so: confirmWithdrawRequest
+  * todo: check if txID was already processed in DB
+    // otherwise:
+    //store txHash+btc address + txID in db
   */
     async pollAndConfirmWithdrawRequests() {
-        let from = 0;
-        while (true) {
-            console.log("Get withdraw requests");
-            const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
+        let from = conf.startIndex;
+
+        while (true) {     
+            const numberOfTransactions = await this.getNrOfTx();
             console.log("Number of pending transactions", numberOfTransactions);
 
-            const allTransactionsIDs = await rskCtrl.multisig.methods["getTransactionIds"](from, numberOfTransactions, true, true).call();
-            console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
+            for(let txID = from; txID < numberOfTransactions;txID++){
+                const isConfirmed = await this.checkIfConfirmed(txID);
 
-
-            for (const txID of allTransactionsIDs) {
-                if(txID<conf.startIndex) continue;
-
-                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txID).call();
                 if (!isConfirmed) {
                     const {btcAdr, txHash } = await this.getPayment(txID);
 
                     if(!btcAdr  || !txHash) {
-                        from = txID
+                        from = txID+1;
                         continue;
                     }
 
                     console.log("Got payment info"); 
                     console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
 
-                    const verification = await this.verifyPaymentInfo(btcAdr, txHash)
+                    const verified = await this.verifyPaymentInfo(btcAdr, txHash)
 
-                    /*
-                    //todo: check if txID was already processed in DB
-                    // otherwise:
-                    //store txHash+btc address + txID in db
-                    */
-
-
-                    if (verification) {
+                    if (verified) {
                         await rskCtrl.confirmWithdrawRequest(txID);
                         console.log(isConfirmed + "\n 'from' is now " + txID)
-                        from = txID
                     }
-
-                } else {
-                    from = txID
-                    console.log("'from' is now " + txID)
-                }
+                } 
+                from = txID+1
+                console.log("'from' is now " + txID)
                 await U.wasteTime(1); //do not torture the node
             }
             await U.wasteTime(5);
+        }
+    }
+
+
+    async getNrOfTx(){
+        while(true) {
+            try{
+                const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
+                if(!numberOfTransactions) {
+                    await U.wasteTime(5) 
+                    continue;
+                }
+                return numberOfTransactions;
+            }
+            catch(e){
+                console.error("Error getting transaction count");
+                console.error(e);
+                await U.wasteTime(5) 
+                continue;
+            }
+        }
+    }
+
+    async checkIfConfirmed(txId){
+        try{
+            const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
+            return isConfirmed;
+        }
+        catch(e){
+            console.error("Error getting confirmed info");
+            console.error(e);
+            return true; //need to be true to not be processed again
         }
     }
 
@@ -123,7 +143,7 @@ class MainController {
             return resp.data;
         } catch (err) {
             // Handle Error Here
-            console.error("error on getting deposit BTC address");
+            console.error("error on getting deposit BTC address for "+txId);
             //console.error(err);
             return {btcAdr:null, txHash:null};
         }
@@ -132,17 +152,16 @@ class MainController {
     /**
      * Checks wheter
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
+     * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
      * 3. timestamp < 1h (pull)
      * 4. todo: btc deposit address match
      */
     async verifyPaymentInfo(btcAdr, txHash) {
-        if (!btcAdr || generatedBtcAddresses.indexOf(btcAdr)==-1) {
+        if (generatedBtcAddresses.indexOf(btcAdr)==-1) {
             console.error("Wrong btc address");
             return false;
         } 
-        if (!txHash) return false;
-
     
         const tx = await this.api.getRawTx(txHash);
         //console.log(tx)
@@ -153,8 +172,7 @@ class MainController {
         }
         
         console.log("Valid BTC transaction hash")
-        return true;
-        
+        return true;  
     }
 
     async createSignature(){
