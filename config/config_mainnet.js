@@ -4,7 +4,7 @@ import accounts from "../secrets/accounts";
 
 export default {
     nodeId: 2, //every node gets a unique id
-    masterNode: '', // add me
+    masterNode: 'http://3.131.33.161:3000/',
     rskNodeProvider: 'https://mainnet.sovryn.app/rpc',
     btcNodeProvider: {},
     network: "main",
