@@ -14,6 +14,6 @@ export default {
     startIndex: 0, //tx-index
     account: accounts["main"],
     blockExplorer: "https://explorer.rsk.co",
-    sovrynInternalTelegramId: -0, // add me
+    sovrynInternalTelegramId: -1001469142339, 
     errorBotTelegram: Object.keys(telegramBot).length > 0 ? telegramBot : null
 }
