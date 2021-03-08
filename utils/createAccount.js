@@ -7,7 +7,7 @@ import conf from '../config/config';
 var fs = require('fs');
 var web3 = new Web3(conf.nodeProvider);
 
-const pass = process.argv[2];
+const pass = process.argv[3];
 
 function createAccount() {
     var account = web3.eth.accounts.create();

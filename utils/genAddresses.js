@@ -50,15 +50,5 @@ const createGenBtcAddresses = () => {
     )
 }
 
-fs.readFile(__dirname + '/../db/genBtcAddresses.json', (error, data) => {
-    if (error) {
-        console.log("We need to create genBtcAddresses.json")
-        createGenBtcAddresses();
-    } else {
-        if (data) {
-            console.log('The genBtcAddresses.json has already been created')
-        } else {
-            createGenBtcAddresses();
-        }
-    }
-});
+
+createGenBtcAddresses();
