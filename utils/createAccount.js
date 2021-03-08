@@ -31,11 +31,4 @@ function createAccount() {
     });
 }
 
-
-function decryptAccount(p) {
-    let r = web3.eth.accounts.decrypt(ks, p);
-    console.log(r);
-}
-
 createAccount();
-//decryptAccount()
