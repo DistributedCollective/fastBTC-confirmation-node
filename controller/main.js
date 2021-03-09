@@ -118,7 +118,7 @@ class MainController {
         try{
             const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
             const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
-            console.log(i+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
+            console.log(txId+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
 
             return isConfirmed || txObj.executed;
         }
