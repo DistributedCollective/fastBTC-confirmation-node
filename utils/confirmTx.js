@@ -10,5 +10,5 @@ async function confirmTx(id) {
     console.log(tx);
 }
 
-const txId = process.argv[3];
+const txId = process.argv[4]?process.argv[4]:process.argv[3];
 confirmTx(txId);
