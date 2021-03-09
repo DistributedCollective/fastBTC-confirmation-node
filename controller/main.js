@@ -66,9 +66,9 @@ class MainController {
             console.log("Number of pending transactions", numberOfTransactions);
 
             for(let txID = from; txID < numberOfTransactions;txID++){
-                const isConfirmed = await this.checkIfConfirmed(txID);
+                const isProcessed = await this.checkIfProcessed(txID);
 
-                if (!isConfirmed) {
+                if (!isProcessed) {
                     const {btcAdr, txHash } = await this.getPayment(txID);
 
                     if(!btcAdr  || !txHash) {
@@ -114,11 +114,13 @@ class MainController {
         }
     }
 
-    async checkIfConfirmed(txId){
+    async checkIfProcessed(txId){
         try{
             const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
-            console.log(txId+" is confirmed: "+isConfirmed);
-            return isConfirmed;
+            const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
+            console.log(i+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
+
+            return isConfirmed || txObj.executed;
         }
         catch(e){
             console.error("Error getting confirmed info");
