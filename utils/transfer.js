@@ -12,7 +12,7 @@
      console.log("init rsk");
      await rskCtrl.init(conf);
  
-     const pKey = conf.account.pKey || web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
+     const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
     rskCtrl.web3.eth.accounts.wallet.add(pKey);
        
 
