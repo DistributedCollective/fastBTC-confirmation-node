@@ -117,6 +117,7 @@ class MainController {
     async checkIfConfirmed(txId){
         try{
             const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
+            console.log(txId+" is confirmed: "+isConfirmed);
             return isConfirmed;
         }
         catch(e){

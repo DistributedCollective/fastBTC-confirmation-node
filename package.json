@@ -9,6 +9,7 @@
     "start:main": "npm run genAddresses:main && nodemon --config nodemon.json start.js mainnet",
     "create": "node -r esm utils/createAccount.js mainnet",
     "decrypt": "node -r esm utils/decryptAccount.js mainnet",
+    "sign": "node -r esm utils/confirmTx.js mainnet",
     "genAddresses:test": "node -r esm utils/genAddresses.js testnet",
     "genAddresses:main": "node -r esm utils/genAddresses.js mainnet"
   },
