@@ -10,6 +10,7 @@
     "create": "node -r esm utils/createAccount.js mainnet",
     "decrypt": "node -r esm utils/decryptAccount.js mainnet",
     "sign": "node -r esm utils/confirmTx.js mainnet",
+    "transfer": "node -r esm utils/transfer.js mainnet",
     "genAddresses:test": "node -r esm utils/genAddresses.js testnet",
     "genAddresses:main": "node -r esm utils/genAddresses.js mainnet"
   },
