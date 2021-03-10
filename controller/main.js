@@ -60,6 +60,7 @@ class MainController {
   */
     async pollAndConfirmWithdrawRequests() {
         let from = conf.startIndex;
+        
 
         while (true) {     
             const numberOfTransactions = await this.getNrOfTx();
@@ -80,10 +81,10 @@ class MainController {
                     console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
 
                     const verified = await this.verifyPaymentInfo(btcAdr, txHash)
-
+                    console.log(verified);
                     if (verified) {
                         await rskCtrl.confirmWithdrawRequest(txID);
-                        console.log(isConfirmed + "\n 'from' is now " + txID)
+                        console.log(" 'from' is now " + txID)
                     }
                 } 
                 from = txID+1
