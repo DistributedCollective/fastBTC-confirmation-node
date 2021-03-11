@@ -23,6 +23,14 @@ function createAccount() {
             ks: ks
         }
     }
+
+    if(process.argv[4]){
+        console.log(account);
+        console.log("---------------------------------");
+        console.log(ks);
+        return;
+    }
+
     const obj = "export default " + JSON.stringify(w);
 
     fs.writeFile('./secrets/accounts.js', obj, (err)=> {
