@@ -116,17 +116,20 @@ class MainController {
     }
 
     async checkIfProcessed(txId){
-        try{
-            const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
-            const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
-            console.log(txId+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
+        while(true){
+            try{
+                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
+                const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
+                console.log(txId+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
 
-            return isConfirmed || txObj.executed;
-        }
-        catch(e){
-            console.error("Error getting confirmed info");
-            console.error(e);
-            return true; //need to be true to not be processed again
+                return isConfirmed || txObj.executed;
+            }
+            catch(e){
+                console.error("Error getting confirmed info");
+                console.error(e);
+                await U.wasteTime(5) 
+                continue;
+            }
         }
     }
 

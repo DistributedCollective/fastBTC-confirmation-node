@@ -43,7 +43,7 @@ class RskCtrl {
             walletManager.decreasePending(wallet);
             return receipt;
         } catch (err) {
-            console.error("Error confirming tx");
+            console.error("Error confirming tx "+txId);
             console.error(err);
             if (telegramBot) telegramBot.sendMessage("Error confirming transaction with ID " + txId);
         }
@@ -76,7 +76,7 @@ class RskCtrl {
 
     async getGasPrice() {
         const gasPrice = await this.web3.eth.getGasPrice();
-        return Math.round(gasPrice);
+        return Math.round(gasPrice*1.2); //add security buffer to avoid gasPrice too low error
     }
 }
 
