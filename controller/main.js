@@ -116,6 +116,7 @@ class MainController {
     }
 
     async checkIfProcessed(txId){
+        let cnt=0;
         while(true){
             try{
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
@@ -128,6 +129,9 @@ class MainController {
                 console.error("Error getting confirmed info");
                 console.error(e);
                 await U.wasteTime(5) 
+                cnt++;
+
+                if(cnt==5) return true; //need to be true so the same tx is not processed again
                 continue;
             }
         }
