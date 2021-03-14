@@ -16,6 +16,8 @@ class RskCtrl {
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
         walletManager.init(this.web3);
         this.delay=0;
+        this.lastGasPrice=0;
+        this.lastNonce=0;
     }
 
     async confirmWithdrawRequest(txId) {
@@ -26,21 +28,14 @@ class RskCtrl {
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
        
         try {
-            const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
-            const gasPrice = await this.getGasPrice();
-    
-            if(!nonce || !gasPrice) {
-                console.error("Error retrieving gas-price or nonce");
-                console.error(nonce);
-                console.error(gasPrice);
-                return false;
-            }
+            this.lastNonce = await this.getNonce(wallet);
+            this.lastGasPrice = await this.getGasPrice();
     
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
                 gas: 1000000,
-                gasPrice: gasPrice,
-                nonce: nonce
+                gasPrice: this.lastGasPrice,
+                nonce: this.lastNonce
             });
             
             console.log("tx receipt:");
@@ -82,8 +77,36 @@ class RskCtrl {
     }
 
     async getGasPrice() {
-        const gasPrice = await this.web3.eth.getGasPrice();
-        return Math.round(gasPrice*1.2); //add security buffer to avoid gasPrice too low error
+        let cnt=0;
+
+        while(true){
+            try {
+                const gasPrice = await this.web3.eth.getGasPrice();
+                return Math.round(gasPrice*1.2); //add security buffer to avoid gasPrice too low error
+            }
+            catch(e){
+                console.error("Error retrieving gas price");
+                console.error(e);
+                cnt++;
+                if(cnt==5) return this.lastGasPrice*1.05;
+            }
+        }
+    }
+
+    async getNonce(wallet){
+        let cnt=0;
+
+        while(true){
+            try {
+                return await this.web3.eth.getTransactionCount(wallet, 'pending');
+            }
+            catch(e){
+                console.error("Error retrieving gas price");
+                console.error(e);
+                cnt++;
+                if(cnt==5) return this.lastNonce+1;
+            }
+        }
     }
 }
 
