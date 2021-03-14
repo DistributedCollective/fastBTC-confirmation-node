@@ -29,7 +29,12 @@ class RskCtrl {
             const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
             const gasPrice = await this.getGasPrice();
     
-            if(!nonce || !gasPrice) return false;
+            if(!nonce || !gasPrice) {
+                console.error("Error retrieving gas-price or nonce");
+                console.error(nonce);
+                console.error(gasPrice);
+                return false;
+            }
     
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
@@ -38,8 +43,10 @@ class RskCtrl {
                 nonce: nonce
             });
             
-            if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
+            console.log("tx receipt:");
             console.log(receipt);
+            if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
+            
             walletManager.decreasePending(wallet);
             return receipt;
         } catch (err) {
