@@ -88,7 +88,7 @@ class RskCtrl {
                 console.error("Error retrieving gas price");
                 console.error(e);
                 cnt++;
-                if(cnt==5) return this.lastGasPrice*1.05;
+                if(cnt==5) return this.lastGasPrice;
             }
         }
     }
