@@ -89,6 +89,9 @@ npm run genAddresses:[main | test]
 to generate deposit addresses based on the Btc multisig.
 
 
+Set the master node ip+port and the multisig contract address on Rsk in config/[config_mainnet | config_testnet].
+
+
 
 To receive notifications on telegram about new transactions and errors create a telegram bot-token-id and write in in a file /secrets/telegram.js
 ```sh
