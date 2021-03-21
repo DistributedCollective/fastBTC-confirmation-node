@@ -1,12 +1,14 @@
 /**
- * Main ctrl
- * todo1: check master/slave communication error-handling
- * todo2: check if tx happend and was not processed already (db)
- * todo3: store tx-id in db
+ * Main controller. 
+ * Connects to the master node to receive credentials for the Btc node. 
+ * Starts polling for new withdraw requests on the Rsk multisig and confirms them if they were not confirmed already and the provided
+ * tx hash from the master node can be verified.
+ * 
+ * Known security issue: The master node can create withdrawals to a different Rsk address than provided by the user. 
+ * This problem can't be solved without using atomic swaps.
  */
 
 import conf from '../config/config';
-import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
@@ -16,16 +18,12 @@ const axios = require('axios');
 
 
 class MainController {
-    constructor() {
-        this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
-    }
-
     async init() {
         await rskCtrl.init();
         await dbCtrl.initDb(conf.db);
 
         const sign = await this.createSignature();
-        // a consigner is the slave node watching for withdraw requests that need confirmation
+        
         try {
             const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", sign);
             console.log(resp.data);

@@ -1,5 +1,5 @@
 /**
- * Transfers rBtc from the given wallet to user addresses 
+ * Confirms rBtc withdrawals on a multisig contract 
  */
 import Web3 from 'web3';
 import telegramBot from '../utils/telegram';
@@ -76,6 +76,11 @@ class RskCtrl {
         return wallet;
     }
 
+
+    /**
+     * The Rsk node does not return a valid response occassionally for a short period of time
+     * Thats why the request is repeated 5 times and in case it still failes the last known gas price is returned
+     */
     async getGasPrice() {
         let cnt=0;
 
@@ -93,6 +98,10 @@ class RskCtrl {
         }
     }
 
+    /**
+     * The Rsk node does not return a valid response occassionally for a short period of time
+     * Thats why the request is repeated 5 times and in case it still failes the last nonce +1 is returned
+     */
     async getNonce(wallet){
         let cnt=0;
 

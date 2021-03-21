@@ -5,9 +5,9 @@ A n:m multisig* administrates RBtc withdrawals of the managed wallet smart contr
 The main node monitors the BTC multisignature addresses for incoming deposits. As soon as a deposit is recognized and confirmed, it is submitting a transaction to the multisig, requesting an equivalent payout from the smart contract. This transaction is emitting a submission event.
   
 The  confirmation nodes listen for submission events. As soon as one is emitted, they verify that  
-- the Bitcoin address is indeed derived from the BTC multisig,
+- the submitted Bitcoin address is indeed derived from the BTC multisig,
 - the Btc deposit transaction hash is valid, recent (work in progress) and contains the correct Btc address
-- the submission was made by the main node (work in progress)
+- the submission was made by the main node and the amount equals the one deposited on the Btc address (work in progress)
 
 If all checks were successful, they confirm the transaction on the multisig contract. On the last confirmation, the withdrawal is executed.
 To avoid failing transactions, the master node assigns a delay to the confirmation nodes.

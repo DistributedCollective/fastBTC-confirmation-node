@@ -1,7 +1,6 @@
 /**
  * Database controller
- * Stores user deposits on a given Btc address and corresponding Rsk transfers
- *
+ * Stores user deposits on a given Btc address
  */
 
 
