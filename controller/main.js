@@ -5,7 +5,7 @@
  * tx hash from the master node can be verified.
  * 
  * Known security issue: The master node can create withdrawals to a different Rsk address than provided by the user. 
- * This problem can't be solved without using atomic swaps.
+ * This problem can be solved by adding a public database where users Btc addresses are connected to Rsk addresses with a signature.
  */
 
 import conf from '../config/config';
