@@ -198,8 +198,6 @@ class MainController {
             await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
         }
 
-
-        
         console.log("Valid BTC transaction hash")
         return true;  
     }
