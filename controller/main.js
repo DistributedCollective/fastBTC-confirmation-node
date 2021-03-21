@@ -51,14 +51,11 @@ class MainController {
 
 
     /**
-  * Create inifinite loop
-  * 1. get tx-id#s
-  * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
-  * 3. if so: confirmWithdrawRequest
-  * todo: check if txID was already processed in DB
-    // otherwise:
-    //store txHash+btc address + txID in db
-  */
+     * Creates an inifinite loop
+     * 1. Get all txIds from the Rsk multisig
+     * 2. For every txId: check if is was already confirmed
+     * if not: Get corresponding btc deposit txHash and address from the master, verify this information and process the confirmation
+     */
     async pollAndConfirmWithdrawRequests() {
         let from = conf.startIndex;
         
@@ -139,6 +136,9 @@ class MainController {
     }
 
 
+    /**
+     * Get transaction info from the Btc node
+     */
     async getPayment(txId) {
         const sign = await this.createSignature();
         try {
@@ -166,7 +166,7 @@ class MainController {
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
      * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
-     * 3. timestamp < 1h (pull)
+     * 3. timestamp < 1h (work in progress)
      * 4. todo: btc deposit address match
      */
     async verifyPaymentInfo(btcAdr, txHash) {
