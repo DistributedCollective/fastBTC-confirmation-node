@@ -10,6 +10,7 @@ import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
+import dbCtrl from "./dbCtrl";
 import U from '../utils/helper';
 const axios = require('axios');
 
@@ -21,6 +22,8 @@ class MainController {
 
     async init() {
         await rskCtrl.init();
+        await dbCtrl.initDb(conf.db);
+
         const sign = await this.createSignature();
         // a consigner is the slave node watching for withdraw requests that need confirmation
         try {
@@ -40,7 +43,7 @@ class MainController {
             conf.btcNodeProvider = node.data;
             this.api = BitcoinNodeWrapper;
             this.api.init(conf.btcNodeProvider);
-            console.log("Node setup. Start polling for new withdraw requests.")
+            console.log("Node setup successfully")
         } catch (err) {
             // Handle Error Here
             console.error("error on authentication");
@@ -175,12 +178,29 @@ class MainController {
         } 
     
         const tx = await this.api.getRawTx(txHash);
-        //console.log(tx)
-
-        if (!tx) {
+        
+        if (!tx || !tx.vout) {
             console.log("Not a valid BTC transaction hash or missing payment info")
             return false;
         }
+        
+        const addrInVout = (tx.vout || []).find(out => out.address === btcAdr);
+
+        if (!addrInVout) {
+            console.log("BTC address is not in vout of tx");
+            return false;
+        }
+
+        const addedPayment = await dbCtrl.getPayment(txHash);
+
+        if (addedPayment != null) {
+            console.log("deposit payment already existed")
+            return false;
+        } else {
+            await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
+        }
+
+
         
         console.log("Valid BTC transaction hash")
         return true;  

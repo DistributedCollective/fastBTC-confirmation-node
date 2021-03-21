@@ -8,7 +8,7 @@ export default {
     rskNodeProvider: 'https://testnet.sovryn.app/rpc',
     btcNodeProvider: {},
     network: "test",
-    db: "node_testnet.db",
+    db: "node_testnet",
     multisigAddress: "0x1D67BDA1144CacDbEFF1782f0E5B43D7B50bbFe0".toLowerCase(),
     walletSigs,
     startIndex: 160, //tx-index
