@@ -98,6 +98,8 @@ To receive notifications on telegram about new transactions and errors create a 
 export default "[telegram-bot-token]";
 export default ""; for no notifications
 ```
+And add the group-id in the config_main | config_test
+
 
 Install all dependencies with
 
