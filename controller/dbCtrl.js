@@ -44,7 +44,7 @@ class DbCtrl {
                 txHash: txHash,
                 valueBtc: valueBtc,
                 confirmedTime: confirmedTime,
-                dateAdded: new Date()
+                dateAdded: new Date(Date.now())
             });
         } catch (e) {
             console.error(e);
