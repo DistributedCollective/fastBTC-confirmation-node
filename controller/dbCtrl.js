@@ -49,7 +49,7 @@ class DbCtrl {
                 txHash: txHash,
                 valueBtc: valueBtc,
                 dateAdded: new Date(Date.now()),
-                confirmedTime: confirmedTime
+                confirmedTime: isNaN(confirmedTime)? new Date(Date.now()):confirmedTime
             });
         } catch (e) {
             console.error(e);
