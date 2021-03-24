@@ -1,7 +1,6 @@
 /**
  * Database controller
- * Stores user deposits on a given Btc address and corresponding Rsk transfers
- *
+ * Stores user deposits on a given Btc address
  */
 
 
@@ -48,7 +47,7 @@ class DbCtrl {
                 dateAdded: new Date()
             });
         } catch (e) {
-            console.log(e);
+            console.error(e);
             return null;
         }
     }

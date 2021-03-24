@@ -3,7 +3,6 @@ import walletSigs from '../secrets/walletSigs.main';
 import accounts from "../secrets/accounts";
 
 export default {
-    nodeId: 2, //every node gets a unique id
     masterNode: 'http://3.131.33.161:3000/',
     rskNodeProvider: 'https://mainnet.sovryn.app/rpc',
     btcNodeProvider: {},
@@ -11,7 +10,7 @@ export default {
     db: "node_mainnet",
     multisigAddress: "0x0f279e810B95E0d425622b9b40D7bCD0B5C4B19d",
     walletSigs,
-    startIndex: 105, //tx-index
+    startIndex: 250, //tx-index
     account: accounts["main"],
     blockExplorer: "https://explorer.rsk.co",
     sovrynInternalTelegramId: -1001469142339, 

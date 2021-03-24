@@ -1,12 +1,14 @@
 /**
- * Main ctrl
- * todo1: check master/slave communication error-handling
- * todo2: check if tx happend and was not processed already (db)
- * todo3: store tx-id in db
+ * Main controller. 
+ * Connects to the master node to receive credentials for the Btc node. 
+ * Starts polling for new withdraw requests on the Rsk multisig and confirms them if they were not confirmed already and the provided
+ * tx hash from the master node can be verified.
+ * 
+ * Known security issue: The master node can create withdrawals to a different Rsk address than provided by the user. 
+ * This problem can be solved by adding a public database where users Btc addresses are connected to Rsk addresses with a signature.
  */
 
 import conf from '../config/config';
-import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
@@ -16,16 +18,12 @@ const axios = require('axios');
 
 
 class MainController {
-    constructor() {
-        this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
-    }
-
     async init() {
         await rskCtrl.init();
         await dbCtrl.initDb(conf.db);
 
         const sign = await this.createSignature();
-        // a consigner is the slave node watching for withdraw requests that need confirmation
+        
         try {
             const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", sign);
             console.log(resp.data);
@@ -53,14 +51,11 @@ class MainController {
 
 
     /**
-  * Create inifinite loop
-  * 1. get tx-id#s
-  * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
-  * 3. if so: confirmWithdrawRequest
-  * todo: check if txID was already processed in DB
-    // otherwise:
-    //store txHash+btc address + txID in db
-  */
+     * Creates an inifinite loop
+     * 1. Get all txIds from the Rsk multisig
+     * 2. For every txId: check if is was already confirmed
+     * if not: Get corresponding btc deposit txHash and address from the master, verify this information and process the confirmation
+     */
     async pollAndConfirmWithdrawRequests() {
         let from = conf.startIndex;
         
@@ -141,6 +136,9 @@ class MainController {
     }
 
 
+    /**
+     * Get transaction info from the Btc node
+     */
     async getPayment(txId) {
         const sign = await this.createSignature();
         try {
@@ -168,7 +166,7 @@ class MainController {
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
      * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
-     * 3. timestamp < 1h (pull)
+     * 3. timestamp < 1h (work in progress)
      * 4. todo: btc deposit address match
      */
     async verifyPaymentInfo(btcAdr, txHash) {
@@ -193,15 +191,14 @@ class MainController {
 
         const addedPayment = await dbCtrl.getPayment(txHash);
 
-        if (addedPayment != null) {
+        if (!addedPayment) {
             console.log("deposit payment already existed")
             return false;
-        } else {
-            await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
         }
-
-
         
+        await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
+        
+
         console.log("Valid BTC transaction hash")
         return true;  
     }

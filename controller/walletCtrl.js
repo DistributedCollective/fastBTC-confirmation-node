@@ -11,7 +11,6 @@ class WalletManager {
      */
     init(web3){
         this.wallet={};
-        
         const pKey = conf.account.pKey || web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
         web3.eth.accounts.wallet.add(pKey);
         this.wallet = {
