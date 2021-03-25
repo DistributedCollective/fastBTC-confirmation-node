@@ -4,7 +4,7 @@ export default class Payment extends BaseModel {
   constructor(db) {
     const sql = `CREATE TABLE IF NOT EXISTS payments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            txHash text UNIQUE,
+            txHash text,
             valueBtc INTEGER,
             dateAdded datetime,
             confirmedTime datetime
