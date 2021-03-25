@@ -71,6 +71,7 @@ class RskCtrl {
         }
         catch (e) {
             this.mutex.release();
+            console.error("error getting free wallet");
             console.error(e);
         }
         return wallet;

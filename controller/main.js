@@ -81,8 +81,9 @@ class MainController {
                     const verified = await this.verifyPaymentInfo(btcAdr, txHash)
                     console.log(verified);
                     if (verified) {
-                        await rskCtrl.confirmWithdrawRequest(txID);
-                        console.log(" 'from' is now " + txID)
+                        const res = await rskCtrl.confirmWithdrawRequest(txID);
+                        console.log(res);
+                        console.log("from is now " + txID)
                     }
                 } 
                 from = txID+1
@@ -195,7 +196,7 @@ class MainController {
             console.log("deposit payment already existed")
             return false;
         }
-        
+
         await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
         
 
