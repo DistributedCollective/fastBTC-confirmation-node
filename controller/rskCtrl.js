@@ -28,6 +28,7 @@ class RskCtrl {
         try {
             this.lastNonce = await this.getNonce(wallet);
             this.lastGasPrice = await this.getGasPrice();
+            console.log("Send tx with nonce: "+this.lastNonce);
     
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
@@ -41,7 +42,6 @@ class RskCtrl {
             if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
             
             walletManager.decreasePending(wallet);
-            return receipt;
         } catch (err) {
             console.error("Error confirming tx "+txId);
             console.error(err);

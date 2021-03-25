@@ -82,8 +82,7 @@ class MainController {
                     const verified = await this.verifyPaymentInfo(btcAdr, txHash)
                     console.log(verified);
                     if (verified) {
-                        const res = rskCtrl.confirmWithdrawRequest(txID);
-                        console.log(res);
+                        rskCtrl.confirmWithdrawRequest(txID);
                         console.log("from is now " + txID)
                     }
                 } 
