@@ -37,11 +37,12 @@ describe("MainCtrl", async () => {
         assert(!payment);
     });
 
+    /*
     it('should add a payment info to db', async () => {
         const addedPayment = await dbCtrl.addPaymentTx(txHash, 100, new Date(Date.now()));
         console.log(addedPayment)
         assert(addedPayment);
-    });
+    });*/
 
     it('should return true because payment is already in db', async () => {
         const addedPayment = await dbCtrl.getPayment(txHash);

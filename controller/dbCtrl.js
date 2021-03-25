@@ -59,9 +59,11 @@ class DbCtrl {
 
     async getPayment(txHash) {
         try {
-            return this.paymentRepository.findOne({
+            const res = await this.paymentRepository.findOne({
                 txHash: txHash
             });
+            console.log(res);
+            return res;
         } catch (e) {
             console.log(e);
             return null;
