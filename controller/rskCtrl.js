@@ -15,14 +15,12 @@ class RskCtrl {
         this.mutex = new Mutex();
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
         walletManager.init(this.web3);
-        this.delay=0;
         this.lastGasPrice=0;
         this.lastNonce=0;
     }
 
     async confirmWithdrawRequest(txId) {
         console.log("confirm tx " + txId);
-        await U.wasteTime(this.delay);
         
         const wallet = await this.getWallet();
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };

@@ -30,7 +30,7 @@ class MainController {
 
             console.log("My index as cosigner is " + resp.data.index);
             console.log("My delay is " + resp.data.delay + " seconds");
-            rskCtrl.delay=resp.data.delay;
+            this.delay=resp.data.delay;
 
             const node = await axios.post(conf.masterNode + "getNode", sign);
     
@@ -59,10 +59,11 @@ class MainController {
     async pollAndConfirmWithdrawRequests() {
         let from = conf.startIndex;
         
-
         while (true) {     
             const numberOfTransactions = await this.getNrOfTx();
             console.log("Number of pending transactions", numberOfTransactions);
+            
+            await U.wasteTime(this.delay);
 
             for(let txID = from; txID < numberOfTransactions;txID++){
                 const isProcessed = await this.checkIfProcessed(txID);
@@ -90,7 +91,6 @@ class MainController {
                 console.log("'from' is now " + txID)
                 await U.wasteTime(1); //do not torture the node
             }
-            await U.wasteTime(5);
         }
     }
 
