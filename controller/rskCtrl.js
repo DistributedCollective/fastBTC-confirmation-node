@@ -47,6 +47,7 @@ class RskCtrl {
         } catch (err) {
             console.error("Error confirming tx "+txId);
             console.error(err);
+            walletManager.decreasePending(wallet);
             if (telegramBot) telegramBot.sendMessage("Error confirming transaction with ID " + txId);
         }
     }
