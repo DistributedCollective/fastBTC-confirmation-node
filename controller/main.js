@@ -190,6 +190,7 @@ class MainController {
             return false;
         }
 
+        /*
         const addedPayment = await dbCtrl.getPayment(txHash);
 
         if (!addedPayment) {
@@ -198,7 +199,7 @@ class MainController {
         }
 
         await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
-        
+        */
 
         console.log("Valid BTC transaction hash")
         return true;  
