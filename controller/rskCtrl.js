@@ -1,5 +1,5 @@
 /**
- * Confirms rBtc withdrawals on a multisig contract 
+ * Confirms rBtc withdrawals on a multisig contract
  */
 import Web3 from 'web3';
 import telegramBot from '../utils/telegram';
@@ -21,26 +21,26 @@ class RskCtrl {
 
     async confirmWithdrawRequest(txId) {
         console.log("confirm tx " + txId);
-        
+
         const wallet = await this.getWallet();
         if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
-       
+
         try {
             this.lastNonce = await this.getNonce(wallet);
             this.lastGasPrice = await this.getGasPrice();
             console.log("Send tx with nonce: "+this.lastNonce);
-    
+
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
                 gas: 1000000,
                 gasPrice: this.lastGasPrice,
                 nonce: this.lastNonce
             });
-            
+
             console.log("tx receipt:");
             console.log(receipt);
             if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
-            
+
             walletManager.decreasePending(wallet);
         } catch (err) {
             console.error("Error confirming tx "+txId);
@@ -50,11 +50,38 @@ class RskCtrl {
         }
     }
 
+    async getConfirmationCount(txId) {
+        const wallet = await walletManager.getWalletAddress();
+        if (wallet.length === 0) return { error: "no wallet available to process the assignment" };
 
+        try {
+            return await this.multisig.methods.getConfirmationCount(txId).call({
+                from: wallet,
+            });
+        } catch (err) {
+            console.error("Error getConfirmationCount tx "+txId);
+            console.error(err);
+            return null;
+        }
+    }
 
+    async getConfirmations(txId) {
+        const wallet = await walletManager.getWalletAddress();
+        if (wallet.length === 0) return { error: "no wallet available to process the assignment" };
+
+        try {
+            return await this.multisig.methods.getConfirmations(txId).call({
+                from: wallet,
+            });
+        } catch (err) {
+            console.error("Error getConfirmations tx "+txId);
+            console.error(err);
+            return null;
+        }
+    }
 
     /**
-     * @notice loads a free wallet from the wallet manager 
+     * @notice loads a free wallet from the wallet manager
      * @dev this is secured by a mutex to make sure we're never exceeding 4 pending transactions per wallet
      */
     async getWallet() {
