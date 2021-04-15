@@ -23,7 +23,9 @@ class RskCtrl {
         console.log("confirm tx " + txId);
 
         const wallet = await this.getWallet();
-        if (wallet.length == 0) return { error: "no wallet available to process the assignment" };
+        if (wallet.length === 0) {
+            throw new Error("No wallet to process the payment from");
+        }
 
         try {
             this.lastNonce = await this.getNonce(wallet);
@@ -39,20 +41,28 @@ class RskCtrl {
 
             console.log("tx receipt:");
             console.log(receipt);
-            if (telegramBot) telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
+
+            if (telegramBot) {
+                telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
+            }
 
             walletManager.decreasePending(wallet);
         } catch (err) {
             console.error("Error confirming tx "+txId);
             console.error(err);
             walletManager.decreasePending(wallet);
-            if (telegramBot) telegramBot.sendMessage("Error confirming transaction with ID " + txId);
+
+            if (telegramBot) {
+                telegramBot.sendMessage("Error confirming transaction with ID " + txId);
+            }
+
         }
     }
-
     async getConfirmationCount(txId) {
         const wallet = await walletManager.getWalletAddress();
-        if (wallet.length === 0) return { error: "no wallet available to process the assignment" };
+        if (wallet.length === 0) {
+            return { error: "no wallet available to process the assignment" };
+        }
 
         try {
             return await this.multisig.methods.getConfirmationCount(txId).call({
@@ -67,7 +77,10 @@ class RskCtrl {
 
     async getConfirmations(txId) {
         const wallet = await walletManager.getWalletAddress();
-        if (wallet.length === 0) return { error: "no wallet available to process the assignment" };
+
+        if (wallet.length === 0) {
+            return { error: "no wallet available to process the assignment" };
+        }
 
         try {
             return await this.multisig.methods.getConfirmations(txId).call({
@@ -119,7 +132,10 @@ class RskCtrl {
                 console.error("Error retrieving gas price");
                 console.error(e);
                 cnt++;
-                if(cnt==5) return this.lastGasPrice;
+
+                if (cnt === 5) {
+                    return this.lastGasPrice;
+                }
             }
         }
     }
@@ -129,7 +145,7 @@ class RskCtrl {
      * Thats why the request is repeated 5 times and in case it still failes the last nonce +1 is returned
      */
     async getNonce(wallet){
-        let cnt=0;
+        let cnt = 0;
 
         while(true){
             try {
@@ -139,7 +155,9 @@ class RskCtrl {
                 console.error("Error retrieving gas price");
                 console.error(e);
                 cnt++;
-                if(cnt==5) return this.lastNonce+1;
+                if(cnt === 5) {
+                    return this.lastNonce + 1;
+                }
             }
         }
     }

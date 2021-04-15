@@ -2,6 +2,7 @@
  * Database controller
  * Stores user deposits on a given Btc address
  */
+import LastProcessedTxID from '../models/lastProcessedTxID';
 
 
 const sqlite3 = require('sqlite3').verbose();
@@ -31,9 +32,11 @@ class DbCtrl {
     async initRepos() {
         try {
             this.paymentRepository = new Payment(this.db);
-
             await this.paymentRepository.createTable();
-        } catch (e) {
+
+            this.lastProcessedTxID = new LastProcessedTxID(this.db);
+            await this.lastProcessedTxID.createTable();
+      } catch (e) {
             console.log(e);
         }
     }

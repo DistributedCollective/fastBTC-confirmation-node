@@ -30,7 +30,7 @@ class MainController {
 
             console.log("My index as cosigner is " + resp.data.index);
             console.log("My delay is " + resp.data.delay + " seconds");
-            this.delay=resp.data.delay;
+            this.delay = resp.data.delay;
 
             const node = await axios.post(conf.masterNode + "getNode", sign);
     
@@ -51,25 +51,35 @@ class MainController {
 
 
     /**
-     * Creates an inifinite loop
+     * Creates an infinite loop
      * 1. Get all txIds from the Rsk multisig
      * 2. For every txId: check if is was already confirmed
-     * if not: Get corresponding btc deposit txHash and address from the master, verify this information and process the confirmation
+     * if not: Get corresponding btc deposit txHash and address from the master,
+     * verify this information and process the confirmation
      */
     async pollAndConfirmWithdrawRequests() {
         let from = conf.startIndex;
-        
-        while (true) {     
-            const numberOfTransactions = await this.getNrOfTx();
-            console.log("Number of pending transactions", numberOfTransactions);
-            
-            await U.wasteTime(this.delay);
 
-            for(let txID = from; txID < numberOfTransactions;txID++){
+        // check if we have processed until a later transaction
+        const lastTx = dbCtrl.lastProcessedTxID.find({id: 0})
+        if (lastTx.txId > from) {
+            from = lastTx.txId;
+        }
+
+        while (true) {
+            const numberOfTransactions = await this.getNrOfTx();
+            const earliestConfirmationTime = Date.now() + this.delay * 1000;
+            console.log("Number of pending transactions", numberOfTransactions);
+
+            let tries = 0;
+
+            for (let txID = from; txID < numberOfTransactions; txID++){
                 const isProcessed = await this.checkIfProcessed(txID);
 
-                if (!isProcessed) {
-                    const {btcAdr, txHash } = await this.getPayment(txID);
+                if (! isProcessed) {
+                    await U.untilAfter(earliestConfirmationTime);
+
+                    const {btcAdr, txHash} = await this.getPayment(txID);
 
                     if(!btcAdr  || !txHash) {
                         from = txID+1;
@@ -77,25 +87,62 @@ class MainController {
                     }
 
                     console.log("Got payment info"); 
-                    console.log("BTC address is", btcAdr); console.log("Transaction hash is", txHash);
+                    console.log("BTC address is %s", btcAdr);
+                    console.log("Transaction hash is %s", txHash);
 
                     const verified = await this.verifyPaymentInfo(btcAdr, txHash)
-                    console.log(verified);
+                    console.log("LastProcessedTxId verified: %s", verified);
+
                     if (verified) {
-                        rskCtrl.confirmWithdrawRequest(txID);
-                        console.log("from is now " + txID)
+                        // just do it once more to decrease number of races
+                        if (await this.checkIfProcessed(txID)) {
+                            console.log("LastProcessedTxId already processed!");
+                            continue;
+                        }
+
+                        let success = false;
+                        try {
+                            await rskCtrl.confirmWithdrawRequest(txID);
+                            success = true;
+                        }
+                        catch (e) {
+                            tries += 1;
+
+                            if (tries < 3) {
+                                console.error("Confirming txID %s failed, tries %d: %s", txID, tries, e);
+
+                                // decrease by 1 to counter ++ in loop clause 3
+                                txID --;
+                                continue;
+                            }
+
+                            console.error("Giving up on txID %s - %d failed tries", tries);
+                        }
+
+                        await dbCtrl.lastProcessedTxID.update(
+                            {
+                                id: 0,
+                            },
+                            {
+                                txID: txID,
+                                txHash: txHash,
+                                dateAdded: Date.now(),
+                            }
+                        )
+
+                        await U.wasteTime(1); //do not torture the node
                     }
-                } 
-                from = txID+1
+                }
+
+                tries = 0;
+                from = txID + 1
                 console.log("'from' is now " + txID)
-                await U.wasteTime(1); //do not torture the node
             }
         }
     }
 
-
     async getNrOfTx(){
-        while(true) {
+        while (true) {
             try{
                 const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
                 if(!numberOfTransactions) {
@@ -108,14 +155,14 @@ class MainController {
                 console.error("Error getting transaction count");
                 console.error(e);
                 await U.wasteTime(5) 
-                continue;
+                // continue
             }
         }
     }
 
     async checkIfProcessed(txId){
-        let cnt=0;
-        while(true){
+        let cnt = 0;
+        while (true) {
             try{
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
                 const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
@@ -126,11 +173,14 @@ class MainController {
             catch(e){
                 console.error("Error getting confirmed info");
                 console.error(e);
-                await U.wasteTime(5) 
+                await U.wasteTime(5);
                 cnt++;
 
-                if(cnt==5) return true; //need to be true so the same tx is not processed again
-                continue;
+                if (cnt === 5) {
+                    return true;
+                } //need to be true so the same tx is not processed again
+
+                // continue
             }
         }
     }
@@ -162,7 +212,7 @@ class MainController {
     }
 
     /**
-     * Checks wheter
+     * Checks whether
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
      * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
@@ -170,7 +220,7 @@ class MainController {
      * 4. todo: btc deposit address match
      */
     async verifyPaymentInfo(btcAdr, txHash) {
-        if (generatedBtcAddresses.indexOf(btcAdr)==-1) {
+        if (generatedBtcAddresses.indexOf(btcAdr) === -1) {
             console.error("Wrong btc address");
             return false;
         } 

@@ -17,11 +17,11 @@ export default class Payment extends BaseModel {
     try {
       const paymentTb = await super.createTable();
 
-      console.log("Created Payment table", paymentTb);
+      console.log("Created LastProcessedTxId table", paymentTb);
 
       return paymentTb;
     } catch (e) {
-      console.log('Can not create Payment table', e);
+      console.log('Can not create LastProcessedTxId table', e);
     }
   }
 }

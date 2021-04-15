@@ -10,7 +10,11 @@ console.log("Hola. Starting confirmation node on "+conf.network);
 
 async function start(){
     await MainCtrl.init();
-    MainCtrl.pollAndConfirmWithdrawRequests();
+    await MainCtrl.pollAndConfirmWithdrawRequests();
 }
 
-start();
+start().catch(e => {
+    console.error("An error was thrown from the main loop", e);
+}).then(() => {
+    console.log("Bye!");
+});
