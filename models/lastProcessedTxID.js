@@ -14,12 +14,10 @@ export default class LastProcessedTxID extends BaseModel {
 
   async createTable() {
       const lastProcessedTxId = await super.createTable();
-      console.log("Created LastProcessedTxId table", lastProcessedTxId);
+      console.log("Created last_processed_txid table", lastProcessedTxId);
 
-      try {
-          await this.findOne({ id: 0 });
-      }
-      catch (e) {
+      if (! await this.findOne({ id: 0 })) {
+          console.log("Added last processed tx id row");
           await this.insert({id: 0, txId: 0});
       }
 
