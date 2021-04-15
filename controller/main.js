@@ -61,7 +61,7 @@ class MainController {
         let from = conf.startIndex;
 
         // check if we have processed until a later transaction
-        const lastTx = await dbCtrl.lastProcessedTxID.find({id: 0})
+        const lastTx = await dbCtrl.lastProcessedTxID.findOne({id: 0})
         if (lastTx.txId > from) {
             from = lastTx.txId;
         }

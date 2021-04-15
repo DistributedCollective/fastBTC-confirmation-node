@@ -36,7 +36,7 @@ class DbCtrl {
 
             this.lastProcessedTxID = new LastProcessedTxID(this.db);
             await this.lastProcessedTxID.createTable();
-      } catch (e) {
+        } catch (e) {
             console.log(e);
         }
     }
