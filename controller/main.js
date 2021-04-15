@@ -72,6 +72,7 @@ class MainController {
             console.log("Number of pending transactions", numberOfTransactions);
 
             let tries = 0;
+            let storedTxHash = null;
 
             for (let txID = from; txID < numberOfTransactions; txID++){
                 const isProcessed = await this.checkIfProcessed(txID);
@@ -80,6 +81,7 @@ class MainController {
                     await U.untilAfter(earliestConfirmationTime);
 
                     const {btcAdr, txHash} = await this.getPayment(txID);
+                    storedTxHash = txHash;
 
                     if(!btcAdr  || !txHash) {
                         from = txID+1;
@@ -129,7 +131,7 @@ class MainController {
                     },
                     {
                         txID: txID,
-                        txHash: txHash,
+                        txHash: storedTxHash,
                         dateAdded: Date.now(),
                     }
                 )
