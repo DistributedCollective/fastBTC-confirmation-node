@@ -119,20 +119,20 @@ class MainController {
                             console.error("Giving up on txID %s - %d failed tries", tries);
                         }
 
-                        await dbCtrl.lastProcessedTxID.update(
-                            {
-                                id: 0,
-                            },
-                            {
-                                txID: txID,
-                                txHash: txHash,
-                                dateAdded: Date.now(),
-                            }
-                        )
-
                         await U.wasteTime(1); //do not torture the node
                     }
                 }
+
+                await dbCtrl.lastProcessedTxID.update(
+                    {
+                        id: 0,
+                    },
+                    {
+                        txID: txID,
+                        txHash: txHash,
+                        dateAdded: Date.now(),
+                    }
+                )
 
                 tries = 0;
                 from = txID + 1
