@@ -9,7 +9,7 @@ export default class LastProcessedTxID extends BaseModel {
             dateAdded datetime
         )`;
 
-    super(db, 'payments', sql);
+    super(db, 'last_processed_txid', sql);
   }
 
   async createTable() {
