@@ -118,7 +118,7 @@ class MainController {
             }
             console.log(resp.data);
 
-            console.log("The BTC address is " + resp.data.user.btcAdr);
+            console.log("The BTC address is " + resp.data.user.btcadr);
             console.log("The transaction hash is " + resp.data.tx.txHash);
             return resp.data;
         } catch (err) {
