@@ -1,35 +1,36 @@
 /**
- * Main ctrl
- * todo1: check master/slave communication error-handling
- * todo2: check if tx happend and was not processed already (db)
- * todo3: store tx-id in db
+ * Main controller. 
+ * Connects to the master node to receive credentials for the Btc node. 
+ * Starts polling for new withdraw requests on the Rsk multisig and confirms them if they were not confirmed already and the provided
+ * tx hash from the master node can be verified.
+ * 
+ * Known security issue: The master node can create withdrawals to a different Rsk address than provided by the user. 
+ * This problem can be solved by adding a public database where users Btc addresses are connected to Rsk addresses with a signature.
  */
 
 import conf from '../config/config';
-import { networks } from "bitcoinjs-lib";
 import BitcoinNodeWrapper from "../utils/bitcoinNodeWrapper";
 import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
+import dbCtrl from "./dbCtrl";
 import U from '../utils/helper';
 const axios = require('axios');
 
 
 class MainController {
-    constructor() {
-        this.network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
-    }
-
     async init() {
         await rskCtrl.init();
+        await dbCtrl.initDb(conf.db);
+
         const sign = await this.createSignature();
-        // a consigner is the slave node watching for withdraw requests that need confirmation
+        
         try {
             const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", sign);
             console.log(resp.data);
 
             console.log("My index as cosigner is " + resp.data.index);
             console.log("My delay is " + resp.data.delay + " seconds");
-            rskCtrl.delay=resp.data.delay;
+            this.delay=resp.data.delay;
 
             const node = await axios.post(conf.masterNode + "getNode", sign);
     
@@ -40,7 +41,7 @@ class MainController {
             conf.btcNodeProvider = node.data;
             this.api = BitcoinNodeWrapper;
             this.api.init(conf.btcNodeProvider);
-            console.log("Node setup. Start polling for new withdraw requests.")
+            console.log("Node setup successfully")
         } catch (err) {
             // Handle Error Here
             console.error("error on authentication");
@@ -50,63 +51,94 @@ class MainController {
 
 
     /**
-  * Create inifinite loop
-  * 1. get tx-id#s
-  * 2. for tx-id: call isConfirmed on the multisig to check wheter this proposal is still unconfirmed
-  * 3. if so: confirmWithdrawRequest
-  */
+     * Creates an inifinite loop
+     * 1. Get all txIds from the Rsk multisig
+     * 2. For every txId: check if is was already confirmed
+     * if not: Get corresponding btc deposit txHash and address from the master, verify this information and process the confirmation
+     */
     async pollAndConfirmWithdrawRequests() {
-        let from = 0;
-        while (true) {
-            console.log("Get withdraw requests");
-            const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
+        let from = conf.startIndex;
+        
+        while (true) {     
+            const numberOfTransactions = await this.getNrOfTx();
             console.log("Number of pending transactions", numberOfTransactions);
+            
+            await U.wasteTime(this.delay);
 
-            const allTransactionsIDs = await rskCtrl.multisig.methods["getTransactionIds"](from, numberOfTransactions, true, true).call();
-            console.log("There are a total of " + allTransactionsIDs.length + " withdraw requests transactions")
+            for(let txId = from; txId < numberOfTransactions; txId++){
+                const isProcessed = await this.checkIfProcessed(txId);
 
-
-            for (const txId of allTransactionsIDs) {
-                if(txId<conf.startIndex) continue;
-
-                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
-                if (!isConfirmed) {
+                if (!isProcessed) {
                     const { user, tx } = await this.getPayment(txId);
 
-                    if(!user || !tx) {
-                        from = txId
+                    if(!user  || !tx) {
+                        from = txId+1;
                         continue;
                     }
 
                     console.log("Got payment info"); 
                     console.log("BTC address is", user.btcAdr); console.log("Transaction hash is", tx.txHash);
 
-                    const verification = await this.verifyPaymentInfo(user.btcAdr, tx.txHash)
-
-                    /*
-                    //todo: check if txId was already processed in DB
-                    // otherwise:
-                    //store txHash+btc address + txId in db
-                    */
-
-                    if (verification) {
-                        await rskCtrl.confirmWithdrawRequest(txId);
-                        await this.storeWithdrawRequest(user, tx, txId);
-                        from = txId
-                        console.log(isConfirmed + "\n 'from' is now " + txId)
+                    const verified = await this.verifyPaymentInfo(user.btcadr, tx.txHash)
+                    console.log(verified);
+                    if (verified) {
+                        rskCtrl.confirmWithdrawRequest(txId);
+                        console.log("from is now " + txId)
                     }
-
-                } else {
-                    from = txId
-                    console.log("'from' is now " + txId)
-                }
+                } 
+                from = ++txId
+                console.log("'from' is now " + txId)
                 await U.wasteTime(1); //do not torture the node
             }
-            await U.wasteTime(5);
         }
     }
 
 
+    async getNrOfTx(){
+        while(true) {
+            try{
+                const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
+                if(!numberOfTransactions) {
+                    await U.wasteTime(5) 
+                    continue;
+                }
+                return numberOfTransactions;
+            }
+            catch(e){
+                console.error("Error getting transaction count");
+                console.error(e);
+                await U.wasteTime(5) 
+                continue;
+            }
+        }
+    }
+
+    async checkIfProcessed(txId){
+        let cnt=0;
+        while(true){
+            try{
+                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
+                const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
+                console.log(txId+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
+
+                return isConfirmed || txObj.executed;
+            }
+            catch(e){
+                console.error("Error getting confirmed info");
+                console.error(e);
+                await U.wasteTime(5) 
+                cnt++;
+
+                if(cnt==5) return true; //need to be true so the same tx is not processed again
+                continue;
+            }
+        }
+    }
+
+
+    /**
+     * Get transaction info from the Btc node
+     */
     async getPayment(txId) {
         const sign = await this.createSignature();
         try {
@@ -123,7 +155,7 @@ class MainController {
             return resp.data;
         } catch (err) {
             // Handle Error Here
-            console.error("error on getting deposit BTC address");
+            console.error("error on getting deposit BTC address for "+txId);
             //console.error(err);
             return {btcAdr:null, txHash:null};
         }
@@ -132,29 +164,44 @@ class MainController {
     /**
      * Checks wheter
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
+     * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
-     * 3. timestamp < 1h (pull)
+     * 3. timestamp < 1h (work in progress)
      * 4. todo: btc deposit address match
      */
     async verifyPaymentInfo(btcAdr, txHash) {
-        if (!btcAdr || generatedBtcAddresses.indexOf(btcAdr)==-1) {
+        if (generatedBtcAddresses.indexOf(btcAdr)==-1) {
             console.error("Wrong btc address");
             return false;
         } 
-        if (!txHash) return false;
-
     
         const tx = await this.api.getRawTx(txHash);
-        //console.log(tx)
-
-        if (!tx) {
+        
+        if (!tx || !tx.vout) {
             console.log("Not a valid BTC transaction hash or missing payment info")
             return false;
         }
         
+        const addrInVout = (tx.vout || []).find(out => out.address === btcAdr);
+
+        if (!addrInVout) {
+            console.log("BTC address is not in vout of tx");
+            return false;
+        }
+
+        /*
+        const addedPayment = await dbCtrl.getPayment(txHash);
+
+        if (!addedPayment) {
+            console.log("deposit payment already existed")
+            return false;
+        }
+
+        await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
+        */
+
         console.log("Valid BTC transaction hash")
-        return true;
-        
+        return true;  
     }
 
     async createSignature(){

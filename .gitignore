@@ -3,3 +3,4 @@ package-lock.json
 secrets/*
 logs/*
 db/*
+pm2.json

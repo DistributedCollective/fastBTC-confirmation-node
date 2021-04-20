@@ -7,7 +7,7 @@ import conf from '../config/config';
 var fs = require('fs');
 var web3 = new Web3(conf.nodeProvider);
 
-const pass = process.argv[2];
+const pass = process.argv[3];
 
 function createAccount() {
     var account = web3.eth.accounts.create();
@@ -23,6 +23,14 @@ function createAccount() {
             ks: ks
         }
     }
+
+    if(process.argv[4]){
+        console.log(account);
+        console.log("---------------------------------");
+        console.log(ks);
+        return;
+    }
+
     const obj = "export default " + JSON.stringify(w);
 
     fs.writeFile('./secrets/accounts.js', obj, (err)=> {
@@ -31,11 +39,4 @@ function createAccount() {
     });
 }
 
-
-function decryptAccount(p) {
-    let r = web3.eth.accounts.decrypt(ks, p);
-    console.log(r);
-}
-
 createAccount();
-//decryptAccount()

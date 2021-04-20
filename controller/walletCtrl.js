@@ -11,6 +11,7 @@ class WalletManager {
      */
     init(web3){
         this.wallet={};
+
         const pKey = conf.account.pKey || web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
         web3.eth.accounts.wallet.add(pKey);
         this.wallet = {
@@ -18,7 +19,7 @@ class WalletManager {
             pending: 0
         };
     }
-    
+
     /**
      * returns a wallet with less than 4 pending transactions
      * @param {*} timeout the maximum waiting time  in ms
@@ -35,19 +36,27 @@ class WalletManager {
         return "";
     }
 
-    
+
     /**
      * decreases the pending tx count for a wallet
-     * @param {*} wallet 
+     * @param {*} wallet
      */
     decreasePending(walletAddress){
         if(this.wallet.address == walletAddress){
             this.wallet.pending--;
             return true;
         }
-        
+
         console.error("could not decrease the pending tx count for non-existing wallet address: "+walletAddress);
         return false;
+    }
+
+    /**
+     * For read only blockchain calls.
+     * @return {*}
+     */
+    getWalletAddress() {
+        return this.wallet.address;
     }
 
 }

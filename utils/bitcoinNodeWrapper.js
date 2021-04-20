@@ -212,8 +212,6 @@ class BitcoinNodeWrapper {
                 for (let i = 0; i < mempoolTxIds.length; i++) {
                     //console.log("array length: "+mempoolTxIds.length+" index "+i+" id: "+mempoolTxIds[i]);
                     //const tx = await this.call('getrawtransaction', [mempoolTxIds[i], true]);
-
-
                     let tx;
 
                     try {

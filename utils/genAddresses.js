@@ -2,8 +2,7 @@ import {bip32, networks, payments} from "bitcoinjs-lib";
 import conf from '../config/config';
 const fs = require('fs')
 
-const addresses = []
-const network = conf.network === 'prod' ? networks.bitcoin : networks.testnet;
+const network = conf.network === 'main' ? networks.bitcoin : networks.testnet;
 
 
 function getDerivedPubKeys(pubKeys, index) {
@@ -19,7 +18,8 @@ function getDerivedPubKeys(pubKeys, index) {
 
 
 const getAddresses = () => {
-    for(let i = 0; i < 10000; i++){
+    const addresses = [];
+    for(let i = 0; i < 1000; i++){
         const publicKeys = getDerivedPubKeys(conf.walletSigs.pubKeys, i);
     
         const payment = payments.p2sh({
@@ -33,15 +33,16 @@ const getAddresses = () => {
 
         addresses.push(payment.address)
     }
-    console.log(addresses)
+    console.log(addresses);
+    return addresses;
 }
 
 
 const createGenBtcAddresses = () => {
-    getAddresses();
+    const adr = getAddresses();
     fs.writeFile(
         __dirname + '/../db/genBtcAddresses.json',
-        JSON.stringify(addresses),
+        JSON.stringify(adr),
         error => {
             if (error) {
                 console.log('Error writing genBtcAddresses.json =', error)
@@ -50,15 +51,5 @@ const createGenBtcAddresses = () => {
     )
 }
 
-fs.readFile(__dirname + '/../db/genBtcAddresses.json', (error, data) => {
-    if (error) {
-        console.log("We need to create genBtcAddresses.json")
-        createGenBtcAddresses();
-    } else {
-        if (data) {
-            console.log('The genBtcAddresses.json has already been created')
-        } else {
-            createGenBtcAddresses();
-        }
-    }
-});
+
+createGenBtcAddresses();

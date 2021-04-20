@@ -7,7 +7,11 @@
     "test": "node -r esm tests/encrypt.js",
     "start:test": "npm run genAddresses:test && nodemon --config nodemon.json start.js testnet",
     "start:main": "npm run genAddresses:main && nodemon --config nodemon.json start.js mainnet",
-    "create": "node -r esm utils/createAccount.js",
+    "create": "node -r esm utils/createAccount.js mainnet",
+    "decrypt": "node -r esm utils/decryptAccount.js mainnet",
+    "sign": "node -r esm utils/confirmTx.js mainnet",
+    "checkTx": "node -r esm utils/checkTx.js mainnet",
+    "transfer": "node -r esm utils/transfer.js mainnet",
     "genAddresses:test": "node -r esm utils/genAddresses.js testnet",
     "genAddresses:main": "node -r esm utils/genAddresses.js mainnet"
   },
@@ -28,8 +32,9 @@
     "esm": "^3.2.25",
     "express": "^4.17.1",
     "rpc-client": "^1.0.1",
-    "socket.io-client": "^3.1.1",
     "telegraf": "^3.38",
-    "web3": "1.3.3"
+    "web3": "1.3.3",
+    "lodash": "^4.17.21",
+    "sqlite3": "^5.0.2"
   }
 }
