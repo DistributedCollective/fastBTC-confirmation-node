@@ -77,7 +77,7 @@ class MainController {
                     }
 
                     console.log("Got payment info"); 
-                    console.log("BTC address is", user.btcAdr); console.log("Transaction hash is", tx.txHash);
+                    console.log("BTC address is", user.btcadr); console.log("Transaction hash is", tx.txHash);
 
                     const verified = await this.verifyPaymentInfo(user.btcadr, tx.txHash)
                     console.log(verified);
