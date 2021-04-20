@@ -168,6 +168,13 @@ class MainController {
         };
     }
 
+    /**
+     * @param { {label} } user 
+     * @param { {txHash, valueBtc} } tx 
+     * @param {*} txId 
+     * @param { {message, signedMessage, walletAddress}} sign 
+     * @returns Boolean
+     */
     async storeWithdrawRequest(user, tx, txId, sign) {
         try {
             await axios.post(conf.masterNode + "storeWithdrawRequest", { user, tx, txId, ...sign });
