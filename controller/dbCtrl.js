@@ -42,11 +42,6 @@ class DbCtrl {
     }
 
     async addPaymentTx(txHash, valueBtc, confirmedTime) {
-        console.log("Adding payment to db");
-        console.log(txHash);
-        console.log(valueBtc);
-        console.log(confirmedTime);
-
         try {
             return await this.paymentRepository.insert({
                 txHash: txHash,
