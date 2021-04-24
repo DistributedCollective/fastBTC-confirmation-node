@@ -56,7 +56,6 @@ export default class BaseModel {
         return await this.run(this.createTableSQL);
     }
 
-
     /**
      *
      * @param {object} criteria - query object for finding a user

@@ -39,10 +39,10 @@ class WalletManager {
 
     /**
      * decreases the pending tx count for a wallet
-     * @param {*} wallet
+     * @param {*} walletAddress
      */
-    decreasePending(walletAddress){
-        if(this.wallet.address == walletAddress){
+    decreasePending (walletAddress) {
+        if(this.wallet.address === walletAddress) {
             this.wallet.pending--;
             return true;
         }
