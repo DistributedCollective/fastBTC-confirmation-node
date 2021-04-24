@@ -13,9 +13,7 @@ class Util {
 
     async untilAfter(timestamp) {
         const difference = timestamp - Date.now();
-        if (difference > 0) {
-            await this.wasteTimeMs(difference);
-        }
+        await this.wasteTimeMs(difference >= 0 ? difference: 0);
     }
 }
 

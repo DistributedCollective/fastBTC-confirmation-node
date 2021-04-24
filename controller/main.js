@@ -80,19 +80,19 @@ class MainController {
                 if (! isProcessed) {
                     await U.untilAfter(earliestConfirmationTime);
 
-                    const {btcAdr, txHash} = await this.getPayment(txID);
+                    const {btcAdr, txHash, vout} = await this.getPayment(txID);
                     storedTxHash = txHash;
 
                     if(!btcAdr  || !txHash) {
-                        from = txID+1;
+                        from = txID + 1;
                         continue;
                     }
 
-                    console.log("Got payment info"); 
+                    console.log("Got payment info");
                     console.log("BTC address is %s", btcAdr);
-                    console.log("Transaction hash is %s", txHash);
+                    console.log("Transaction hash is %s; vout %s", txHash, vout);
 
-                    const verified = await this.verifyPaymentInfo(btcAdr, txHash)
+                    const verified = await this.verifyPaymentInfo(btcAdr, txHash, vout);
                     console.log("LastProcessedTxId verified: %s", verified);
 
                     if (verified) {
@@ -198,7 +198,7 @@ class MainController {
 
             if(!resp.data || !resp.data.txHash || !resp.data.btcAdr){
                 console.error("Did not get payment info from master");
-                return {btcAdr:null, txHash:null};
+                return {btcAdr:null, txHash:null, vout:null};
             }
             console.log(resp.data);
 
@@ -209,7 +209,7 @@ class MainController {
             // Handle Error Here
             console.error("error on getting deposit BTC address for "+txId);
             //console.error(err);
-            return {btcAdr:null, txHash:null};
+            return {btcAdr:null, txHash:null, vout:null};
         }
     }
 
@@ -221,7 +221,7 @@ class MainController {
      * 3. timestamp < 1h (work in progress)
      * 4. todo: btc deposit address match
      */
-    async verifyPaymentInfo(btcAdr, txHash) {
+    async verifyPaymentInfo(btcAdr, txHash, vout = -1) {
         if (generatedBtcAddresses.indexOf(btcAdr) === -1) {
             console.error("Wrong btc address");
             return false;
@@ -233,12 +233,30 @@ class MainController {
             console.log("Not a valid BTC transaction hash or missing payment info")
             return false;
         }
-        
-        const addrInVout = (tx.vout || []).find(out => out.address === btcAdr);
 
-        if (!addrInVout) {
-            console.log("BTC address is not in vout of tx");
-            return false;
+        if (vout === -1 || vout == null) {
+            // find the payment in xact
+            const addrInVout = (tx.vout || []).find(out => out.address === btcAdr);
+            if (!addrInVout) {
+                console.log("BTC address is not in vout of tx");
+                return false;
+            }
+        }
+        else {
+            let found = false;
+
+            // we've got a specific vout number now!
+            for (let voutItem of tx.vout) {
+                if (voutItem.vout === vout && voutItem.address === btcAdr) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (! found) {
+                console.log("The given BTC address is not in vout %d of tx, or no such vout exists", vout);
+                return false;
+            }
         }
 
         /*
