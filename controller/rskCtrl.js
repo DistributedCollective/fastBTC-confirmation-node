@@ -46,16 +46,18 @@ class RskCtrl {
                 telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
             }
 
-            walletManager.decreasePending(wallet);
-        } catch (err) {
+        }
+        catch (err) {
             console.error("Error confirming tx "+txId);
             console.error(err);
-            walletManager.decreasePending(wallet);
 
             if (telegramBot) {
                 telegramBot.sendMessage("Error confirming transaction with ID " + txId);
             }
 
+        }
+        finally {
+            walletManager.decreasePending(wallet);
         }
     }
     async getConfirmationCount(txId) {

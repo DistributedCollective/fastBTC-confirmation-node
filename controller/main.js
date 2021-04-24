@@ -243,9 +243,18 @@ class MainController {
             }
         }
         else {
-            // we've got a specific vout index now!
-            if ((tx.vout || [])[vout].address !== btcAdr) {
-                console.log("BTC address is not in vout %d of tx", vout);
+            let found = false;
+
+            // we've got a specific vout number now!
+            for (let voutItem of tx.vout) {
+                if (voutItem.vout === vout && voutItem.address === btcAdr) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (! found) {
+                console.log("The given BTC address is not in vout %d of tx, or no such vout exists", vout);
                 return false;
             }
         }
