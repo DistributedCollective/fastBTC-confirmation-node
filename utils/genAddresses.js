@@ -22,7 +22,7 @@ const getAddresses = () => {
     for(let i = 0; i < 1000; i++){
         const publicKeys = getDerivedPubKeys(conf.walletSigs.pubKeys, i);
     
-        const payment = payments.p2sh({
+        const payment = payments.p2wsh({
             network: network,
             redeem: payments.p2ms({
                 m: conf.walletSigs.cosigners,
