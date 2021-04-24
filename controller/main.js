@@ -69,8 +69,9 @@ class MainController {
         while (true) {
             const numberOfTransactions = await this.getNrOfTx();
             const earliestConfirmationTime = Date.now() + this.delay * 1000;
+            
             console.log("Number of pending transactions", numberOfTransactions);
-
+            
             let tries = 0;
             let storedTxHash = null;
 
@@ -140,6 +141,7 @@ class MainController {
                 from = txID + 1
                 console.log("'from' is now " + txID)
             }
+            await U.wasteTime(1);
         }
     }
 
