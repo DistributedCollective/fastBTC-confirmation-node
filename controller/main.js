@@ -145,7 +145,6 @@ class MainController {
                 from = txID + 1;
                 console.log("next transaction shall be %d", txID);
             }
-
             await U.wasteTime(1);
         }
     }
