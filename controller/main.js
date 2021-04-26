@@ -76,7 +76,6 @@ class MainController {
                 `Number of transactions ${numberOfTransactions}`
             );
 
-            let tries = 0;
             let storedTxHash = null;
 
             for (let txID = from; txID < numberOfTransactions; txID++){
@@ -107,26 +106,28 @@ class MainController {
                             continue;
                         }
 
-                        let success = false;
-                        try {
-                            await rskCtrl.confirmWithdrawRequest(txID);
-                            success = true;
-                        }
-                        catch (e) {
-                            tries += 1;
+                        (async () => {
+                            for (let tries = 1; tries <= 3; tries++) {
+                                try {
+                                    await rskCtrl.confirmWithdrawRequest(txID);
+                                    return;
+                                } catch (err) {
+                                    if (tries === 3) {
+                                        throw new Error(`Giving up on txID ${txID} - ${tries} failed tries`);
+                                    }
 
-                            if (tries < 3) {
-                                console.error("Confirming txID %s failed, tries %d: %s", txID, tries, e);
-
-                                // decrease by 1 to counter ++ in loop clause 3
-                                txID --;
-                                continue;
+                                    console.error(
+                                        "Confirming txID %s failed, tries %d: %s",
+                                        txID, tries, err.toString()
+                                    );
+                                }
                             }
-
-                            console.error("Giving up on txID %s - %d failed tries", tries);
-                        }
-
-                        await U.wasteTime(1); //do not torture the node
+                        })().catch(function (err) {
+                            console.error(
+                                "Confirmation failed after 3 tries: "
+                                + err.toString()
+                            );
+                        })
                     }
                 }
 
@@ -141,7 +142,6 @@ class MainController {
                     }
                 )
 
-                tries = 0;
                 from = txID + 1;
                 console.log("next transaction shall be %d", txID);
             }
