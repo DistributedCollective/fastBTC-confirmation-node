@@ -5,65 +5,83 @@ import Web3 from 'web3';
 import telegramBot from '../utils/telegram';
 import multisigAbi from '../config/multisigAbi';
 import conf from '../config/config';
-import { Mutex } from 'async-mutex';
+import {Mutex} from 'async-mutex';
 import walletManager from './walletCtrl';
-import U from '../utils/helper';
+import U from '../utils/helper'
 
 class RskCtrl {
     init() {
         this.web3 = new Web3(conf.rskNodeProvider);
         this.mutex = new Mutex();
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
+        this.lastGasPrice = 0;
+        this.lastNonce = 0;
+
         walletManager.init(this.web3);
-        this.lastGasPrice=0;
-        this.lastNonce=0;
     }
 
     async confirmWithdrawRequest(txId) {
         console.log("confirm tx " + txId);
 
-        const wallet = await this.getWallet();
+        const release = await this.mutex.acquire();
+
+        let wallet;
+        try {
+            wallet = await this.getWallet();
+        }
+        catch (e) {
+            release();
+            throw e;
+        }
+
         if (wallet.length === 0) {
+            release();
             throw new Error("No wallet to process the payment from");
         }
 
         try {
             this.lastNonce = await this.getNonce(wallet);
             this.lastGasPrice = await this.getGasPrice();
-            console.log("Send tx with nonce: "+this.lastNonce);
+            console.log("Send tx with nonce: %s", this.lastNonce);
 
             const receipt = await this.multisig.methods.confirmTransaction(txId).send({
                 from: wallet,
                 gas: 1000000,
                 gasPrice: this.lastGasPrice,
                 nonce: this.lastNonce
+            }).on('transactionHash', async (transactionHash) => {
+                console.log("got transaction hash %s", transactionHash);
+                await U.wasteTime(1);
+                release();
             });
 
             console.log("tx receipt:");
             console.log(receipt);
 
             if (telegramBot) {
-                telegramBot.sendMessage(`Transaction with ID ${txId} confirmed. Check it in: ${conf.blockExplorer}/tx/${receipt.transactionHash}`);
+                telegramBot.sendMessage(
+                    `Transaction with ID ${txId} confirmed. Check it in: `
+                    `${conf.blockExplorer}/tx/${receipt.transactionHash}`
+                );
             }
 
-        }
-        catch (err) {
-            console.error("Error confirming tx "+txId);
+        } catch (err) {
+            console.error("Error confirming tx " + txId);
             console.error(err);
 
             if (telegramBot) {
                 telegramBot.sendMessage("Error confirming transaction with ID " + txId);
             }
-
-        }
-        finally {
+        } finally {
+            release();
             walletManager.decreasePending(wallet);
         }
     }
+
     async getConfirmationCount(txId) {
         const wallet = await walletManager.getWalletAddress();
         if (wallet.length === 0) {
-            return { error: "no wallet available to process the assignment" };
+            return {error: "no wallet available to process the assignment"};
         }
 
         try {
@@ -71,7 +89,7 @@ class RskCtrl {
                 from: wallet,
             });
         } catch (err) {
-            console.error("Error getConfirmationCount tx "+txId);
+            console.error("Error getConfirmationCount tx " + txId);
             console.error(err);
             return null;
         }
@@ -81,7 +99,7 @@ class RskCtrl {
         const wallet = await walletManager.getWalletAddress();
 
         if (wallet.length === 0) {
-            return { error: "no wallet available to process the assignment" };
+            return {error: "no wallet available to process the assignment"};
         }
 
         try {
@@ -89,7 +107,7 @@ class RskCtrl {
                 from: wallet,
             });
         } catch (err) {
-            console.error("Error getConfirmations tx "+txId);
+            console.error("Error getConfirmations tx " + txId);
             console.error(err);
             return null;
         }
@@ -97,40 +115,30 @@ class RskCtrl {
 
     /**
      * @notice loads a free wallet from the wallet manager
-     * @dev this is secured by a mutex to make sure we're never exceeding 4 pending transactions per wallet
      */
     async getWallet() {
-        await this.mutex.acquire();
         let wallet = "";
         let timeout = 5 * 60 * 1000;
         try {
-            //if I have to wait, any other thread needs to wait as well
             wallet = await walletManager.getFreeWallet(timeout);
-            //because the node can't handle too many simultaneous requests
-            await U.wasteTime(0.5);
-            this.mutex.release();
-        }
-        catch (e) {
-            this.mutex.release();
+        } catch (e) {
             console.error(e);
         }
         return wallet;
     }
-
 
     /**
      * The Rsk node does not return a valid response occassionally for a short period of time
      * Thats why the request is repeated 5 times and in case it still failes the last known gas price is returned
      */
     async getGasPrice() {
-        let cnt=0;
+        let cnt = 0;
 
-        while(true){
+        while (true) {
             try {
                 const gasPrice = await this.web3.eth.getGasPrice();
-                return Math.round(gasPrice*1.2); //add security buffer to avoid gasPrice too low error
-            }
-            catch(e){
+                return Math.round(gasPrice * 1.2); //add security buffer to avoid gasPrice too low error
+            } catch (e) {
                 console.error("Error retrieving gas price");
                 console.error(e);
                 cnt++;
@@ -144,20 +152,19 @@ class RskCtrl {
 
     /**
      * The Rsk node does not return a valid response occassionally for a short period of time
-     * Thats why the request is repeated 5 times and in case it still failes the last nonce +1 is returned
+     * Thats why the request is repeated 5 times and in case it still fails the last nonce +1 is returned
      */
-    async getNonce(wallet){
+    async getNonce(wallet) {
         let cnt = 0;
 
-        while(true){
+        while (true) {
             try {
                 return await this.web3.eth.getTransactionCount(wallet, 'pending');
-            }
-            catch(e){
+            } catch (e) {
                 console.error("Error retrieving gas price");
                 console.error(e);
                 cnt++;
-                if(cnt === 5) {
+                if (cnt === 5) {
                     return this.lastNonce + 1;
                 }
             }
