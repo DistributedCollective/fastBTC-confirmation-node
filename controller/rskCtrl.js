@@ -51,6 +51,8 @@ class RskCtrl {
                 nonce: this.lastNonce
             }).on('transactionHash', async (transactionHash) => {
                 console.log("got transaction hash %s", transactionHash);
+
+                // wait for *1* more second to maximize sync
                 await U.wasteTime(1);
                 release();
             });
@@ -60,7 +62,7 @@ class RskCtrl {
 
             if (telegramBot) {
                 telegramBot.sendMessage(
-                    `Transaction with ID ${txId} confirmed. Check it in: `
+                    `Transaction with ID ${txId} confirmed. Check it in: ` +
                     `${conf.blockExplorer}/tx/${receipt.transactionHash}`
                 );
             }
