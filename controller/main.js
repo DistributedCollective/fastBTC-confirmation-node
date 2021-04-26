@@ -14,6 +14,7 @@ import generatedBtcAddresses from "../db/genBtcAddresses.json";
 import rskCtrl from './rskCtrl';
 import dbCtrl from "./dbCtrl";
 import U from '../utils/helper';
+import loggingUtil from '../utils/loggingUtil';
 const axios = require('axios');
 
 
@@ -69,9 +70,12 @@ class MainController {
         while (true) {
             const numberOfTransactions = await this.getNrOfTx();
             const earliestConfirmationTime = Date.now() + this.delay * 1000;
-            
-            console.log("Number of pending transactions", numberOfTransactions);
-            
+
+            loggingUtil.logUnique(
+                "multisig_tx_count",
+                `Number of transactions ${numberOfTransactions}`
+            );
+
             let tries = 0;
             let storedTxHash = null;
 
@@ -84,7 +88,7 @@ class MainController {
                     const {btcAdr, txHash, vout} = await this.getPayment(txID);
                     storedTxHash = txHash;
 
-                    if(!btcAdr  || !txHash) {
+                    if(!btcAdr || !txHash) {
                         from = txID + 1;
                         continue;
                     }
@@ -138,8 +142,8 @@ class MainController {
                 )
 
                 tries = 0;
-                from = txID + 1
-                console.log("'from' is now " + txID)
+                from = txID + 1;
+                console.log("next transaction shall be %d", txID);
             }
             await U.wasteTime(1);
         }
