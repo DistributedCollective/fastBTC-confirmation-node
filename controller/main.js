@@ -199,24 +199,31 @@ class MainController {
      */
     async getPayment(txId) {
         const sign = await this.createSignature();
-        try {
-            const resp = await axios.post(conf.masterNode + "getPayment", {...sign, txId:txId});
+        for (let retry = 0; retry < 4; retry ++) {
+            try {
+                const resp = await axios.post(conf.masterNode + "getPayment", {
+                    ...sign,
+                    txId: txId
+                });
 
-            if(!resp.data || !resp.data.txHash || !resp.data.btcAdr){
-                console.error("Did not get payment info from master");
-                return {btcAdr:null, txHash:null, vout:null};
+                const data = resp.data;
+                if (data && data.txHash && data.btcAdr) {
+                    console.log("the BTC address is " + data.btcAdr);
+                    console.log("the transaction hash is " + data.txHash);
+                    console.log("the vout is " + data.vout);
+                    return data;
+                }
+                console.log("did not get payment info from master for %d, try %d", txId, retry);
             }
-            console.log(resp.data);
+            catch (err) {
+                console.error(err.toString());
+            }
 
-            console.log("The BTC address is " + resp.data.btcAdr);
-            console.log("The transaction hash is " + resp.data.txHash);
-            return resp.data;
-        } catch (err) {
-            // Handle Error Here
-            console.error("error on getting deposit BTC address for "+txId);
-            //console.error(err);
-            return {btcAdr:null, txHash:null, vout:null};
+            await U.wasteTime(2 ** retry);
         }
+
+        console.error("failed to get payment info from master for txId %d", txId);
+        return {txHash: null, btcAdr: null, vout: null};
     }
 
     /**
