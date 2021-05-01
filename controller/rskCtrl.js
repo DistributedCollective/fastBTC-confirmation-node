@@ -15,7 +15,7 @@ class RskCtrl {
         this.mutex = new Mutex();
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
         this.lastGasPrice = 0;
-        this.lastNonce = 0;
+        this.lastNonce = undefined;
 
         walletManager.init(this.web3);
     }
@@ -157,20 +157,30 @@ class RskCtrl {
      * Thats why the request is repeated 5 times and in case it still fails the last nonce +1 is returned
      */
     async getNonce(wallet) {
-        let cnt = 0;
-
-        while (true) {
+        for (let cnt = 0; cnt < 5; cnt ++) {
             try {
-                return await this.web3.eth.getTransactionCount(wallet, 'pending');
-            } catch (e) {
-                console.error("Error retrieving gas price");
-                console.error(e);
-                cnt++;
-                if (cnt === 5) {
-                    return this.lastNonce + 1;
+                const nonce = await this.web3.eth.getTransactionCount(wallet, 'pending');
+                if (this.lastNonce != null && nonce !== this.lastNonce + 1) {
+                    console.log("nonce %d not expected %d", nonce, this.lastNonce + 1);
+                    if (cnt === 4) {
+                        console.log("giving up and returning it anyway")
+                        return nonce;
+                    }
+
+                    await U.wasteTime(0.5 ** 2 ** cnt);
                 }
+                else {
+                    return nonce;
+                }
+            } catch (e) {
+                console.error("Error retrieving transaction count");
+                console.error(e);
             }
         }
+
+        const finalNonce = this.lastNonce + 1 || 0;
+        console.error("Returning guessed nonce %d", finalNonce);
+        return finalNonce;
     }
 }
 

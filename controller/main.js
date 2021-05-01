@@ -216,7 +216,7 @@ class MainController {
                 console.log("did not get payment info from master for %d, try %d", txId, retry);
             }
             catch (err) {
-                console.error(err);
+                console.error(err.toString());
             }
 
             await U.wasteTime(2 ** retry);
