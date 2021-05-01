@@ -208,19 +208,21 @@ class MainController {
 
                 const data = resp.data;
                 if (data && data.txHash && data.btcAdr) {
-                    console.log("The BTC address is " + data.btcAdr);
-                    console.log("The transaction hash is " + data.txHash);
-                    console.log("The vout is " + data.vout);
+                    console.log("the BTC address is " + data.btcAdr);
+                    console.log("the transaction hash is " + data.txHash);
+                    console.log("the vout is " + data.vout);
                     return data;
                 }
+                console.log("did not get payment info from master for %d, try %d", txId, retry);
             }
             catch (err) {
-                console.error("Did not get payment info from master for %d", txId);
+                console.error(err);
             }
 
             await U.wasteTime(2 ** retry);
         }
 
+        console.error("failed to get payment info from master for txId %d", txId);
         return {txHash: null, btcAdr: null, vout: null};
     }
 
