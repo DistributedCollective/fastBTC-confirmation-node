@@ -152,8 +152,8 @@ class BitcoinNodeWrapper {
                 return {
                     scriptPubKey: {address: payment.address},
                     timestamp: "now",
-                    //witnessscript: payment.redeem.output.toString('hex'),
-                    redeemscript: payment.redeem.output.toString('hex'),
+                    witnessscript: payment.redeem.output.toString('hex'),
+                    //redeemscript: payment.redeem.output.toString('hex'),
                     watchonly: true,
                     label: payment.label
                 };
@@ -181,7 +181,8 @@ class BitcoinNodeWrapper {
                 const req = [{
                     scriptPubKey: {address: payment.address},
                     timestamp: createdDate.getTime(),
-                    redeemscript: payment.redeem.output.toString('hex'),
+                    witnessscript: payment.redeem.output.toString('hex'),
+                    //redeemscript: payment.redeem.output.toString('hex'),
                     watchonly: true,
                     label: label
                 }];
