@@ -7,13 +7,13 @@
     "test": "node -r esm tests/encrypt.js",
     "start:test": "npm run genAddresses:test && nodemon --config nodemon.json start.js testnet",
     "start:main": "npm run genAddresses:main && nodemon --config nodemon.json start.js mainnet",
-    "create": "node -r esm utils/createAccount.js mainnet",
-    "decrypt": "node -r esm utils/decryptAccount.js mainnet",
-    "sign": "node -r esm utils/confirmTx.js mainnet",
-    "checkTx": "node -r esm utils/checkTx.js mainnet",
-    "transfer": "node -r esm utils/transfer.js mainnet",
-    "genAddresses:test": "node -r esm utils/genAddresses.js testnet",
-    "genAddresses:main": "node -r esm utils/genAddresses.js mainnet"
+    "create": "node -r esm scripts/createAccount.js mainnet",
+    "decrypt": "node -r esm scripts/decryptAccount.js mainnet",
+    "sign": "node -r esm scripts/confirmTx.js mainnet",
+    "checkTx": "node -r esm scripts/checkTx.js mainnet",
+    "transfer": "node -r esm scripts/transfer.js mainnet",
+    "genAddresses:test": "node -r esm scripts/genAddresses.js testnet",
+    "genAddresses:main": "node -r esm scripts/genAddresses.js mainnet"
   },
   "repository": {
     "type": "git",

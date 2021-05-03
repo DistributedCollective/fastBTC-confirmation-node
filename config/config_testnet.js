@@ -10,7 +10,7 @@ export default {
     db: "node_testnet",
     multisigAddress: "0x1D67BDA1144CacDbEFF1782f0E5B43D7B50bbFe0".toLowerCase(),
     walletSigs,
-    startIndex: 175, //multisig tx-index from which the node starts confirming withdraw requests 
+    startIndex: 195, //multisig tx-index from which the node starts confirming withdraw requests 
     account: accounts["test"],
     blockExplorer: "https://explorer.testnet.rsk.co",
     sovrynInternalTelegramId: -523868176,
