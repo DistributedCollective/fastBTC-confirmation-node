@@ -66,14 +66,6 @@ class RskCtrl {
                     `${conf.blockExplorer}/tx/${receipt.transactionHash}`
                 );
             }
-
-        } catch (err) {
-            console.error("Error confirming tx " + txId);
-            console.error(err);
-
-            if (telegramBot) {
-                telegramBot.sendMessage("Error confirming transaction with ID " + txId);
-            }
         } finally {
             release();
             walletManager.decreasePending(wallet);
