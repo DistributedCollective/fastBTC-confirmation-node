@@ -1,10 +1,10 @@
 /**
- * Main controller. 
- * Connects to the master node to receive credentials for the Btc node. 
+ * Main controller.
+ * Connects to the master node to receive credentials for the Btc node.
  * Starts polling for new withdraw requests on the Rsk multisig and confirms them if they were not confirmed already and the provided
  * tx hash from the master node can be verified.
- * 
- * Known security issue: The master node can create withdrawals to a different Rsk address than provided by the user. 
+ *
+ * Known security issue: The master node can create withdrawals to a different Rsk address than provided by the user.
  * This problem can be solved by adding a public database where users Btc addresses are connected to Rsk addresses with a signature.
  */
 
@@ -24,7 +24,7 @@ class MainController {
         await dbCtrl.initDb(conf.db);
 
         const sign = await this.createSignature();
-        
+
         try {
             const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", sign);
             console.log(resp.data);
@@ -34,7 +34,7 @@ class MainController {
             this.delay = resp.data.delay;
 
             const node = await axios.post(conf.masterNode + "getNode", sign);
-    
+
             if(!node || !node.data || !node.data.url){
                 console.error("Can't continue without access to a btc node");
                 return;
@@ -101,14 +101,13 @@ class MainController {
 
                     if (verified) {
                         // just do it once more to decrease number of races
-                        if (await this.checkIfProcessed(txID)) {
-                            console.log("LastProcessedTxId already processed!");
-                            continue;
-                        }
-
                         (async () => {
                             for (let tries = 1; tries <= 3; tries++) {
                                 try {
+                                    if (await this.checkIfProcessed(txID)) {
+                                        console.log("LastProcessedTxId already processed!");
+                                        return;
+                                    }
                                     await rskCtrl.confirmWithdrawRequest(txID);
                                     return;
                                 } catch (err) {
@@ -154,7 +153,7 @@ class MainController {
             try{
                 const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
                 if(!numberOfTransactions) {
-                    await U.wasteTime(5) 
+                    await U.wasteTime(5)
                     continue;
                 }
                 return numberOfTransactions;
@@ -162,7 +161,7 @@ class MainController {
             catch(e){
                 console.error("Error getting transaction count");
                 console.error(e);
-                await U.wasteTime(5) 
+                await U.wasteTime(5)
                 // continue
             }
         }
@@ -238,10 +237,10 @@ class MainController {
         if (generatedBtcAddresses.indexOf(btcAdr) === -1) {
             console.error("Wrong btc address");
             return false;
-        } 
-    
+        }
+
         const tx = await this.api.getRawTx(txHash);
-        
+
         if (!tx || !tx.vout) {
             console.log("Not a valid BTC transaction hash or missing payment info")
             return false;
@@ -284,13 +283,13 @@ class MainController {
         */
 
         console.log("Valid BTC transaction hash")
-        return true;  
+        return true;
     }
 
     async createSignature(){
         const m = "Hi master, "+new Date(Date.now());
         const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
-        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);     
+        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);
         return {
             signedMessage: signed.signature,
             message: m,
