@@ -10,7 +10,7 @@ export default {
     db: "node_mainnet",
     multisigAddress: "0x0f279e810B95E0d425622b9b40D7bCD0B5C4B19d",
     walletSigs,
-    startIndex: 9032, //tx-index
+    startIndex: 12000, //tx-index
     account: accounts["main"],
     blockExplorer: "https://explorer.rsk.co",
     sovrynInternalTelegramId: -1001469142339, 
