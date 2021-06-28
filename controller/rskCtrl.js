@@ -9,6 +9,7 @@ import {Mutex} from 'async-mutex';
 import walletManager from './walletCtrl';
 import U from '../utils/helper'
 
+
 class RskCtrl {
     init() {
         this.web3 = new Web3(conf.rskNodeProvider);
@@ -51,8 +52,6 @@ class RskCtrl {
                 nonce: this.lastNonce
             }).on('transactionHash', async (transactionHash) => {
                 console.log("got transaction hash %s", transactionHash);
-
-                // wait for *1* more second to maximize sync
                 await U.wasteTime(1);
                 release();
             });
@@ -62,7 +61,7 @@ class RskCtrl {
 
             if (telegramBot) {
                 telegramBot.sendMessage(
-                    `Transaction with ID ${txId} confirmed. Check it in: ` +
+                    `Transaction with ID ${txId} confirmed. Check it in: `+
                     `${conf.blockExplorer}/tx/${receipt.transactionHash}`
                 );
             }
@@ -107,6 +106,24 @@ class RskCtrl {
         }
     }
 
+    async getCurrentCoSigners() {
+        try {
+            return await this.multisig.methods.getOwners().call();
+        } catch (err) {
+            console.error("Error getCurrentCoSigners", err);
+            throw err;
+        }
+    }
+
+    async getRequiredNumberOfCoSigners() {
+        try {
+            return await this.multisig.methods.required().call();
+        } catch (err) {
+            console.error("Error getRequiredNumberOfCoSigners", err);
+            throw err;
+        }
+    }
+
     /**
      * @notice loads a free wallet from the wallet manager
      */
@@ -122,8 +139,9 @@ class RskCtrl {
     }
 
     /**
-     * The Rsk node does not return a valid response occassionally for a short period of time
-     * Thats why the request is repeated 5 times and in case it still failes the last known gas price is returned
+     * The Rsk node does not return a valid response occasionally for a short
+     * period of time. That's why the request is repeated 5 times, and, in case
+     * it still fails, the last known gas price is returned.
      */
     async getGasPrice() {
         let cnt = 0;

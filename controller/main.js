@@ -15,7 +15,8 @@ import rskCtrl from './rskCtrl';
 import dbCtrl from "./dbCtrl";
 import U from '../utils/helper';
 import loggingUtil from '../utils/loggingUtil';
-const axios = require('axios');
+import {createMasterNodeComm} from './masterNodeComm';
+import AddressMappingSigner from '../utils/addressMappingSignature';
 
 
 class MainController {
@@ -23,22 +24,32 @@ class MainController {
         await rskCtrl.init();
         await dbCtrl.initDb(conf.db);
 
-        const sign = await this.createSignature();
+        this.masterNodeComm = await createMasterNodeComm(
+            conf.masterNode,
+            conf.account.pKey ||
+            rskCtrl.web3.eth.accounts.decrypt(
+                conf.account.ks, process.argv[3]
+            ).privateKey
+        );
+
+        this.walletAddress = conf.account.adr.toLowerCase();
+        this.addressMappingSigner = new AddressMappingSigner();
 
         try {
-            const resp = await axios.post(conf.masterNode + "getCosignerIndexAndDelay", sign);
+            const resp = await this.masterNodeComm.post("getCosignerIndexAndDelay");
             console.log(resp.data);
 
             console.log("My index as cosigner is " + resp.data.index);
             console.log("My delay is " + resp.data.delay + " seconds");
             this.delay = resp.data.delay;
 
-            const node = await axios.post(conf.masterNode + "getNode", sign);
+            const node = await this.masterNodeComm.post("getNode");
 
-            if(!node || !node.data || !node.data.url){
+            if (!node || !node.data || !node.data.url) {
                 console.error("Can't continue without access to a btc node");
                 return;
             }
+
             conf.btcNodeProvider = node.data;
             this.api = BitcoinNodeWrapper;
             this.api.init(conf.btcNodeProvider);
@@ -47,9 +58,16 @@ class MainController {
             // Handle Error Here
             console.error("error on authentication");
             console.error(err);
+            process.exit(1);
         }
     }
 
+    async mainLoop() {
+        await Promise.all([
+            this.pollAndConfirmWithdrawRequests(),
+            this.pollAndSignDepositAddresses()
+        ])
+    }
 
     /**
      * Creates an infinite loop
@@ -78,16 +96,22 @@ class MainController {
 
             let storedTxHash = null;
 
-            for (let txID = from; txID < numberOfTransactions; txID++){
+            for (let txID = from; txID < numberOfTransactions; txID++) {
                 const isProcessed = await this.checkIfProcessed(txID);
 
-                if (! isProcessed) {
+                if (!isProcessed) {
                     await U.untilAfter(earliestConfirmationTime);
 
-                    const {btcAdr, txHash, vout} = await this.getPayment(txID);
+                    const {
+                        btcAdr,
+                        txHash,
+                        vout,
+                        web3Adr,
+                        signatures
+                    } = await this.getPayment(txID);
                     storedTxHash = txHash;
 
-                    if(!btcAdr || !txHash) {
+                    if (!btcAdr || !txHash) {
                         from = txID + 1;
                         continue;
                     }
@@ -96,7 +120,14 @@ class MainController {
                     console.log("BTC address is %s", btcAdr);
                     console.log("Transaction hash is %s; vout %s", txHash, vout);
 
-                    const verified = await this.verifyPaymentInfo(btcAdr, txHash, vout);
+                    const verified = await this.verifyPaymentInfo({
+                        btcAdr,
+                        txHash,
+                        vout,
+                        web3Adr,
+                        signatures,
+                        txID,
+                    });
                     console.log("LastProcessedTxId verified: %s", verified);
 
                     if (verified) {
@@ -148,36 +179,33 @@ class MainController {
         }
     }
 
-    async getNrOfTx(){
+    async getNrOfTx() {
         while (true) {
-            try{
+            try {
                 const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
-                if(!numberOfTransactions) {
+                if (!numberOfTransactions) {
                     await U.wasteTime(5)
                     continue;
                 }
                 return numberOfTransactions;
-            }
-            catch(e){
+            } catch (e) {
                 console.error("Error getting transaction count");
                 console.error(e);
                 await U.wasteTime(5)
-                // continue
             }
         }
     }
 
-    async checkIfProcessed(txId){
+    async checkIfProcessed(txId) {
         let cnt = 0;
         while (true) {
-            try{
+            try {
                 const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
                 const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
-                console.log(txId+": is confirmed: "+isConfirmed+", is executed: "+txObj.executed);
+                console.log(txId + ": is confirmed: " + isConfirmed + ", is executed: " + txObj.executed);
 
                 return isConfirmed || txObj.executed;
-            }
-            catch(e){
+            } catch (e) {
                 console.error("Error getting confirmed info");
                 console.error(e);
                 await U.wasteTime(5);
@@ -197,13 +225,12 @@ class MainController {
      * Get transaction info from the Btc node
      */
     async getPayment(txId) {
-        const sign = await this.createSignature();
-        for (let retry = 0; retry < 4; retry ++) {
+        for (let retry = 0; retry < 4; retry++) {
             try {
-                const resp = await axios.post(conf.masterNode + "getPayment", {
-                    ...sign,
-                    txId: txId
-                });
+                const resp = await this.masterNodeComm.post(
+                    "getPayment",
+                    {txId: txId}
+                );
 
                 const data = resp.data;
                 if (data && data.txHash && data.btcAdr) {
@@ -213,8 +240,7 @@ class MainController {
                     return data;
                 }
                 console.log("did not get payment info from master for %d, try %d", txId, retry);
-            }
-            catch (err) {
+            } catch (err) {
                 console.error(err.toString());
             }
 
@@ -233,7 +259,7 @@ class MainController {
      * 3. timestamp < 1h (work in progress)
      * 4. todo: btc deposit address match
      */
-    async verifyPaymentInfo(btcAdr, txHash, vout = -1) {
+    async verifyPaymentInfo({btcAdr, txHash, vout, web3Adr, signatures, txID}) {
         if (generatedBtcAddresses.indexOf(btcAdr) === -1) {
             console.error("Wrong btc address");
             return false;
@@ -253,8 +279,7 @@ class MainController {
                 console.log("BTC address is not in vout of tx");
                 return false;
             }
-        }
-        else {
+        } else {
             let found = false;
 
             // we've got a specific vout number now!
@@ -265,36 +290,155 @@ class MainController {
                 }
             }
 
-            if (! found) {
+            if (!found) {
                 console.log("The given BTC address is not in vout %d of tx, or no such vout exists", vout);
                 return false;
             }
         }
 
-        /*
-        const addedPayment = await dbCtrl.getPayment(txHash);
+        const cosigners = new Set((await rskCtrl.getCurrentCoSigners()).map((a) => a.toLowerCase()));
+        let required = await rskCtrl.getRequiredNumberOfCoSigners();
 
-        if (!addedPayment) {
-            console.log("deposit payment already existed")
+        if (!required || required < 0) {
+            console.error("Can't really have zero required signatures");
             return false;
         }
 
-        await dbCtrl.addPaymentTx(txHash, Number(tx.value)/1e8, new Date(tx.blockTime));
-        */
+        console.log('%d signatures required for deposit addresses', required);
+        for (const signature of signatures) {
+            const signer = await this.addressMappingSigner.getSigningAddress(
+                btcAdr, web3Adr, signature.signature
+            );
 
-        console.log("Valid BTC transaction hash")
+            // returns true if found + pop too
+            if (cosigners.delete(signer.toLowerCase())) {
+                required--;
+            }
+        }
+
+        if (required) {
+            console.error('No sufficient deposit address signatures, ' +
+                'or invalid signatures');
+            return false;
+        }
+
+        const addedPayment = await dbCtrl.getPayment(txHash, vout);
+        if (addedPayment) {
+            console.error(`double spend attempted for ${txHash}/${vout}`);
+            return false;
+        }
+
+        await dbCtrl.addPaymentTx(txHash, vout, Number(tx.value) / 1e8, new Date(tx.blockTime), txID);
+        console.log('Valid BTC deposit');
         return true;
     }
 
-    async createSignature(){
-        const m = "Hi master, "+new Date(Date.now());
-        const pKey = conf.account.pKey || rskCtrl.web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
-        const signed = await rskCtrl.web3.eth.accounts.sign(m, pKey);
-        return {
-            signedMessage: signed.signature,
-            message: m,
-            walletAddress: conf.account.adr
-        };
+    async getAddressMappingSignatures(dbMapping) {
+        return await dbCtrl.depositAddressSignature.find({
+            deposit_address_id: dbMapping.id
+        });
+    }
+
+    // async addAddressMappingSignatures(dbMapping, signatures) {
+    //     for (const signature of signatures) {
+    //         if (await dbCtrl.depositAddressSignature.find({
+    //             deposit_address_id: dbMapping.id,
+    //             signer: signatures.signer
+    //         })) {
+    //             console.log(`Signature for address mapping ${dbMapping} for signer ${signatures.signer} were already saved`)
+    //             continue;
+    //         }
+    //
+    //         if (await this.verifySignature(dbMapping, signature)) {
+    //             console.log(`Stored new signature for `)
+    //             await dbCtrl.depositAddressSignature.insert({
+    //                 deposit_address_id: dbMapping.id,
+    //                 signer: signature.signer,
+    //                 signature: signature.signature,
+    //             });
+    //         }
+    //     }
+    // }
+
+    async signAddressMapping(btcAddress, web3Address) {
+        return this.addressMappingSigner.signAddressMapping(
+            btcAddress,
+            web3Address,
+        )
+    }
+
+    async addAddressMapping(mapping) {
+        if (generatedBtcAddresses.indexOf(mapping.btcAddress) === -1) {
+            console.error(`Invalid btcAddress injection attempted: ${mapping.btcAddress} not in list`);
+            return;
+        }
+
+        let dbMapping = await dbCtrl.getDepositAddressInfo(
+            mapping.btcAddress
+        );
+
+        if (!dbMapping) {
+            await dbCtrl.insertDepositAddressMapping(
+                mapping.btcAddress,
+                mapping.web3Address
+            );
+
+            dbMapping = await dbCtrl.getDepositAddressInfo(
+                mapping.btcAddress
+            );
+        }
+
+        if (mapping.web3Address !== dbMapping.rsk_address) {
+            console.error(`Master attempted to remap existing deposit address ${mapping.btcAddress} to ${mapping.web3Address}, was mapped to ${dbMapping.rsk_address}`);
+            return;
+        }
+
+        const signature = await this.signAddressMapping(
+            dbMapping.btc_deposit_address,
+            dbMapping.rsk_address,
+        );
+
+        await dbCtrl.insertOrUpdateAddressMappingSignature(
+            dbMapping,
+            this.walletAddress,
+            signature,
+        );
+
+        await this.masterNodeComm.post('addAddressMappingSignature',
+            {
+                btcAddress: mapping.btcAddress,
+                web3Address: mapping.web3Address,
+                signature
+            }
+        );
+    }
+
+    async pollAndSignDepositAddresses() {
+        while (true) {
+            await U.wasteTime(1);
+
+            let resp;
+            try {
+                resp = await this.masterNodeComm.post(
+                    'getUnsignedDepositAddresses',
+                    10
+                );
+            } catch (e) {
+                console.error('Failed to get new deposit addresses', e);
+                continue;
+            }
+
+            const {addresses} = resp.data;
+
+            if (!addresses || !addresses.length) {
+                continue;
+            }
+
+            console.log("Got %d new deposit address mappings", addresses.length);
+            for (const address of addresses) {
+                await this.addAddressMapping(address);
+            }
+        }
     }
 }
 
