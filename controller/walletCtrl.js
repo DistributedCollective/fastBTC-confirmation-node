@@ -3,6 +3,7 @@
  */
 import conf from '../config/config';
 import U from '../utils/helper';
+import {ethers} from 'ethers';
 
 class WalletManager {
     /**
@@ -14,10 +15,17 @@ class WalletManager {
 
         const pKey = conf.account.pKey || web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
         web3.eth.accounts.wallet.add(pKey);
+
         this.wallet = {
             address: conf.account.adr,
             pending: 0
         };
+
+        // make signer available but ensure that pKey doesn't leak!
+        this.signDigest = (digest) => {
+            const signature = (new ethers.utils.SigningKey('0x' + pKey)).signDigest(digest);
+            return ethers.utils.joinSignature(signature);
+        }
     }
 
     /**

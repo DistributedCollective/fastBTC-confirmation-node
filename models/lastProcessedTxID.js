@@ -12,15 +12,11 @@ export default class LastProcessedTxID extends BaseModel {
     super(db, 'last_processed_txid', sql);
   }
 
-  async createTable() {
-      const lastProcessedTxId = await super.createTable();
-      console.log("Created last_processed_txid table", lastProcessedTxId);
-
+  async checkTable() {
       if (! await this.findOne({ id: 0 })) {
-          console.log("Added last processed tx id row");
-          await this.insert({id: 0, txId: 0});
+          console.error("The tabel LastProcessedTxID does not exist or does not " +
+              "have the marker row, did you run migrations?");
+          process.exit(1);
       }
-
-      return lastProcessedTxId;
   }
 }
