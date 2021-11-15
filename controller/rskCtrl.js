@@ -163,7 +163,7 @@ class RskCtrl {
     }
 
     /**
-     * The Rsk node does not return a valid response occassionally for a short period of time
+     * The Rsk node does not return a valid response occasionally for a short period of time
      * Thats why the request is repeated 5 times and in case it still fails the last nonce +1 is returned
      */
     async getNonce(wallet) {
