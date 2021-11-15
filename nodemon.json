@@ -10,10 +10,12 @@
       "js": "node -r esm"
     },
     "watch": [
-      "controller/",
       "config/",
-      "tests/"
+      "controller/",
+      "models/",
+      "secrets/",
+      "utils/"
     ],
     "ext": "js"
-  }
-  
+}
+

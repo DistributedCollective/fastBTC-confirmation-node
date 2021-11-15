@@ -3,12 +3,12 @@
  * Stores user deposits on a given Btc address
  */
 import LastProcessedTxID from '../models/lastProcessedTxID';
-
+import Payment from "../models/payment";
+import DepositAddress from '../models/depositAddress';
+import DepositAddressSignature from '../models/depositAddressSignature';
 
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-
-import Payment from "../models/payment";
 
 class DbCtrl {
 
@@ -32,22 +32,30 @@ class DbCtrl {
     async initRepos() {
         try {
             this.paymentRepository = new Payment(this.db);
-            await this.paymentRepository.createTable();
+            await this.paymentRepository.checkTable();
 
             this.lastProcessedTxID = new LastProcessedTxID(this.db);
-            await this.lastProcessedTxID.createTable();
+            await this.lastProcessedTxID.checkTable();
+
+            this.depositAddress = new DepositAddress(this.db);
+            await this.depositAddress.checkTable();
+
+            this.depositAddressSignature = new DepositAddressSignature(this.db);
+            await this.depositAddressSignature.checkTable();
         } catch (e) {
             console.log(e);
         }
     }
 
-    async addPaymentTx(txHash, valueBtc, confirmedTime) {
+    async addPaymentTx(txHash, vout, valueBtc, confirmedTime, txID) {
         try {
             return await this.paymentRepository.insert({
                 txHash: txHash,
+                vout: vout,
                 valueBtc: valueBtc,
-                dateAdded: new Date(Date.now()),
-                confirmedTime: isNaN(confirmedTime)? new Date(Date.now()):confirmedTime
+                dateAdded: new Date(),
+                txId: txID,
+                confirmedTime: isNaN(confirmedTime)? new Date(Date.now()): confirmedTime
             });
         } catch (e) {
             console.error(e);
@@ -55,17 +63,38 @@ class DbCtrl {
         }
     }
 
-    async getPayment(txHash) {
+    async getPayment(txHash, vout) {
         try {
-            const res = await this.paymentRepository.findOne({
-                txHash: txHash
+            return await this.paymentRepository.findOne({
+                txHash: txHash,
+                vout: vout
             });
-            console.log(res);
-            return res;
         } catch (e) {
-            console.log(e);
             return null;
         }
+    }
+
+    async getDepositAddressInfo(btcAddress) {
+        return await this.depositAddress.findOne({
+            btc_deposit_address: btcAddress
+        });
+    }
+
+    async insertDepositAddressMapping(btcAddress, rskAddress) {
+        return await this.depositAddress.insert({
+            btc_deposit_address: btcAddress,
+            rsk_address: rskAddress,
+            created: new Date(),
+        });
+    }
+
+    async insertOrUpdateAddressMappingSignature(dbMapping, signer, signature) {
+        return await this.depositAddressSignature.insertOrReplace({
+            deposit_address_id: dbMapping.id,
+            signer: signer,
+            signature: signature,
+            created: new Date()
+        });
     }
 }
 

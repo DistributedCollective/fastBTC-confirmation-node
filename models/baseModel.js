@@ -1,10 +1,9 @@
 import _ from 'lodash';
 
 export default class BaseModel {
-    constructor (db, tableName, createTableSQL) {
+    constructor (db, tableName) {
         this.db = db;
         this.table = tableName;
-        this.createTableSQL = createTableSQL;
     }
 
     run(sql, params = []) {
@@ -108,10 +107,16 @@ export default class BaseModel {
         return this.all(sql, params);
     }
 
-    async insert(data) {
+    async insert(data, replace = false) {
         const params = _.values(data);
+
+        let extra = '';
+        if (replace === true) {
+            extra = 'OR REPLACE';
+        }
+
         const sql = `
-            INSERT INTO ${this.table} (${_.keys(data).join(',')})
+            INSERT ${extra} INTO ${this.table} (${_.keys(data).join(',')})
             VALUES (${_.map(data, () => '?').join(',')})
         `;
 
@@ -122,6 +127,10 @@ export default class BaseModel {
         } else {
             return Promise.reject("Can not insert new item to table " + this.table);
         }
+    }
+
+    async insertOrReplace(data) {
+        return this.insert(data, true);
     }
 
     update(criteria, updateObject) {
@@ -146,5 +155,14 @@ export default class BaseModel {
         `;
 
         return this.run(sql, params);
+    }
+
+    async checkTable() {
+        try {
+            await this.find({}, {limit: 1});
+        } catch (e) {
+            console.error(`The ${this.table} table does not exist, have you run the migrations?`, e);
+            process.exit(1);
+        }
     }
 }

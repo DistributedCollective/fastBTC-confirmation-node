@@ -22,15 +22,21 @@ function getDerivedPubKeys(pubKeys, index) {
 function zpubToXpub(zpub) {
     var data = b58.decode(zpub)
     data = data.slice(4)
-    data = Buffer.concat([Buffer.from('0488b21e','hex'), data])
+
+    if (zpub.startsWith('Vpub') || zpub.startsWith('vpub')) {
+        data = Buffer.concat([Buffer.from('043587cf','hex'), data])
+    }
+    else {
+        data = Buffer.concat([Buffer.from('0488b21e','hex'), data])
+    }
     return b58.encode(data)
   }
 
 const getAddresses = () => {
     const addresses = [];
-    for(let i = 0; i < 100; i++){
+    for(let i = 0; i < 15000; i++){
         const publicKeys = getDerivedPubKeys(conf.walletSigs.pubKeys, i);
-    
+
         const payment = payments.p2wsh({
             network: network,
             redeem: payments.p2ms({
