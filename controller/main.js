@@ -304,7 +304,7 @@ class MainController {
             return false;
         }
 
-        console.log('%d signatures nRequired for deposit addresses', nRequiredSignatures);
+        console.log('%d signatures required for deposit addresses', nRequiredSignatures);
         let nVerifiedSignatures = 0;
         for (const signature of signatures) {
             const signer = await this.addressMappingSigner.getSigningAddress(
