@@ -85,7 +85,11 @@ class MainController {
             from = lastTx.txId + 1;
         }
 
+        // set of transaction ids we've surely processed
+        const processedTransactionIds = new Set();
+
         while (true) {
+            let txID = from - 1000;
             const numberOfTransactions = await this.getNrOfTx();
             const earliestConfirmationTime = Date.now() + this.delay * 1000;
 
@@ -96,10 +100,31 @@ class MainController {
 
             let storedTxHash = null;
 
-            for (let txID = from; txID < numberOfTransactions; txID++) {
+            const start = from - 1000;
+            const end = numberOfTransactions - 1;
+            loggingUtil.logUnique(
+                "multisig_loop_range",
+                `Checking transactions from ${start} through ${end}`
+            );
+
+            for (txID = start; txID <= end; txID++) {
+                if (processedTransactionIds.contains(txID)) {
+                    continue;
+                }
+
+                // It was processed n default blocks ago
                 const isProcessed = await this.checkIfProcessed(txID);
 
-                if (!isProcessed) {
+                if (isProcessed) {
+                    processedTransactionIds.add(txID);
+                    continue;
+                }
+                else {
+                    // it's been processed *now*
+                    if (await this.checkIfProcessed(txID, 0)) {
+                        continue;
+                    }
+
                     await U.untilAfter(earliestConfirmationTime);
 
                     const {
@@ -160,21 +185,24 @@ class MainController {
                         })
                     }
                 }
+            }
 
+            // advance from here.
+            if (txID >= from) {
                 await dbCtrl.lastProcessedTxID.update(
                     {
                         id: 0,
                     },
                     {
                         txID: txID,
-                        txHash: storedTxHash,
+                        txHash: '',
                         dateAdded: Date.now(),
                     }
-                )
+                );
 
                 from = txID + 1;
-                console.log("next transaction shall be %d", txID);
             }
+            console.log("next transaction shall be %d", txID);
             await U.wasteTime(1);
         }
     }
@@ -196,13 +224,30 @@ class MainController {
         }
     }
 
-    async checkIfProcessed(txId) {
+    lastBlockNumber = null;
+    blockNumberCacheExpires = 0;
+
+    async cachedBlockNumber() {
+        if (this.blockNumberCacheExpires < (+new Date())) {
+            this.lastBlockNumber = await rskCtrl.web3.eth.getBlockNumber();
+            this.blockNumberCacheExpires = +new Date() + 10000;
+        }
+        return this.lastBlockNumber;
+    }
+
+    async checkIfProcessed(txId, confirmations=3) {
         let cnt = 0;
+        let block = 'latest';
+
+        if (confirmations > 0) {
+            block = await this.cachedBlockNumber() - confirmations;
+        }
+
         while (true) {
             try {
-                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call();
-                const txObj = await rskCtrl.multisig.methods["transactions"](txId).call();
-                console.log(txId + ": is confirmed: " + isConfirmed + ", is executed: " + txObj.executed);
+                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call({}, block);
+                const txObj = await rskCtrl.multisig.methods["transactions"](txId).call({}, block);
+                console.log(`${txId}: is confirmed: ${isConfirmed}, is executed: ${txObj.executed}`);
 
                 return isConfirmed || txObj.executed;
             } catch (e) {
@@ -212,8 +257,8 @@ class MainController {
                 cnt++;
 
                 if (cnt === 5) {
-                    return true;
-                } //need to be true so the same tx is not processed again
+                    return false;
+                }
 
                 // continue
             }
