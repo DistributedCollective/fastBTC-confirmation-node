@@ -297,14 +297,15 @@ class MainController {
         }
 
         const cosigners = new Set((await rskCtrl.getCurrentCoSigners()).map((a) => a.toLowerCase()));
-        let required = await rskCtrl.getRequiredNumberOfCoSigners();
+        let nRequiredSignatures = await rskCtrl.getRequiredNumberOfCoSigners();
 
-        if (!required || required < 0) {
-            console.error("Can't really have zero required signatures");
+        if (!nRequiredSignatures || nRequiredSignatures < 0) {
+            console.error("Can't really have zero nRequired signatures");
             return false;
         }
 
-        console.log('%d signatures required for deposit addresses', required);
+        console.log('%d signatures required for deposit addresses', nRequiredSignatures);
+        let nVerifiedSignatures = 0;
         for (const signature of signatures) {
             const signer = await this.addressMappingSigner.getSigningAddress(
                 btcAdr, web3Adr, signature.signature
@@ -312,15 +313,16 @@ class MainController {
 
             // returns true if found + pop too
             if (cosigners.delete(signer.toLowerCase())) {
-                required--;
+                nVerifiedSignatures ++;
             }
         }
 
-        if (required) {
-            console.error('No sufficient deposit address signatures, ' +
-                'or invalid signatures');
+        if (nRequiredSignatures > nVerifiedSignatures) {
+            console.error(`No sufficient deposit address signatures, or invalid signatures; had ${nVerifiedSignatures} when required ${nRequiredSignatures}`);
             return false;
         }
+
+        console.log(`Had ${nVerifiedSignatures} on deposit address; required ${nRequiredSignatures}`);
 
         const addedPayment = await dbCtrl.getPayment(txHash, vout);
         if (addedPayment) {
