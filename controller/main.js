@@ -393,24 +393,29 @@ class MainController {
             return;
         }
 
-        const signature = await this.signAddressMapping(
-            dbMapping.btc_deposit_address,
-            dbMapping.rsk_address,
-        );
+        try {
+            const signature = await this.signAddressMapping(
+                dbMapping.btc_deposit_address,
+                dbMapping.rsk_address,
+            );
 
-        await dbCtrl.insertOrUpdateAddressMappingSignature(
-            dbMapping,
-            this.walletAddress,
-            signature,
-        );
+            await dbCtrl.insertOrUpdateAddressMappingSignature(
+                dbMapping,
+                this.walletAddress,
+                signature,
+            );
 
-        await this.masterNodeComm.post('addAddressMappingSignature',
-            {
-                btcAddress: mapping.btcAddress,
-                web3Address: mapping.web3Address,
-                signature
-            }
-        );
+            await this.masterNodeComm.post('addAddressMappingSignature',
+                {
+                    btcAddress: mapping.btcAddress,
+                    web3Address: mapping.web3Address,
+                    signature
+                }
+            );
+        }
+        catch (e) {
+            console.error(`Failed to update deposit address mapping:`, e);
+        }
     }
 
     async pollAndSignDepositAddresses() {
