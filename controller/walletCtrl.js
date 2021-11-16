@@ -16,6 +16,11 @@ class WalletManager {
         const pKey = conf.account.pKey || web3.eth.accounts.decrypt(conf.account.ks, process.argv[3]).privateKey;
         web3.eth.accounts.wallet.add(pKey);
 
+        if (!pKey || !/^0x/.test(pKey)) {
+            console.error("The RSK private key must be defined and start with 0x");
+            throw new Error("Invalid RSK private key, must start with 0x");
+        }
+
         this.wallet = {
             address: conf.account.adr,
             pending: 0
@@ -23,7 +28,7 @@ class WalletManager {
 
         // make signer available but ensure that pKey doesn't leak!
         this.signDigest = (digest) => {
-            const signature = (new ethers.utils.SigningKey('0x' + pKey)).signDigest(digest);
+            const signature = (new ethers.utils.SigningKey(pKey)).signDigest(digest);
             return ethers.utils.joinSignature(signature);
         }
     }
