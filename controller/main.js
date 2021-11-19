@@ -19,6 +19,12 @@ import {createMasterNodeComm} from './masterNodeComm';
 import AddressMappingSigner from '../utils/addressMappingSignature';
 import walletCtrl from './walletCtrl';
 
+class TxIdNotFoundError extends Error {
+    constructor(message) {
+        super(message); // (1)
+        this.name = "TxIdNotFoundError"; // (2)
+    }
+}
 
 class MainController {
     async init() {
@@ -128,13 +134,28 @@ class MainController {
 
                     await U.untilAfter(earliestConfirmationTime);
 
-                    const {
+                    let {
                         btcAdr,
                         txHash,
                         vout,
                         web3Adr,
                         signatures
-                    } = await this.getPayment(txID);
+                    } = {};
+                    try {
+                        ({
+                            btcAdr,
+                            txHash,
+                            vout,
+                            web3Adr,
+                            signatures
+                        } = await this.getPayment(txID));
+                    } catch (e) {
+                        if (e instanceof TxIdNotFoundError) {
+                            console.log(`Master node does not know about ${txID}, marking it as processed`);
+                            processedTransactionIds.add(txID);
+                            continue;
+                        }
+                    }
                     storedTxHash = txHash;
 
                     if (!btcAdr || !txHash) {
@@ -303,6 +324,9 @@ class MainController {
                 }
                 console.log("did not get payment info from master for %d, try %d", txId, retry);
             } catch (err) {
+                if (err.indexOf('404') !== -1) {
+                    throw new TxIdNotFoundError(`txid ${txId} not found from master`);
+                }
                 console.error(err.toString());
             }
 
