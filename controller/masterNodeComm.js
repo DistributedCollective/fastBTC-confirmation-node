@@ -16,7 +16,7 @@ class MasterNodeComm {
         return {
             signedMessage: signed.signature,
             message: m,
-            walletAddress: conf.account.adr,
+            walletAddress: conf.account.adr.toLowerCase(),
             created: +new Date()
         };
     }
