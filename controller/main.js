@@ -247,7 +247,7 @@ class MainController {
         while (true) {
             try {
                 if (selfOnly) {
-                    const currentConfirmations = rskCtrl.getConfirmations(txId).map(x => x.toLowerCase());
+                    const currentConfirmations = (await rskCtrl.getConfirmations(txId)).map(x => x.toLowerCase());
 
                     // If we have already signed, balk out
                     const ourAddress = walletCtrl.getWalletAddress().toLowerCase();

@@ -40,7 +40,7 @@ class RskCtrl {
             throw new Error("No wallet to process the payment from");
         }
 
-        const currentConfirmations = this.getConfirmations(txId).map(x => x.toLowerCase());
+        const currentConfirmations = (await this.getConfirmations(txId)).map(x => x.toLowerCase());
 
         // If we have already signed, balk out
         if (currentConfirmations.indexOf(wallet.toLowerCase()) !== -1) {
