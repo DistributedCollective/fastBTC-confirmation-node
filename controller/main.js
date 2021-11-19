@@ -17,6 +17,7 @@ import U from '../utils/helper';
 import loggingUtil from '../utils/loggingUtil';
 import {createMasterNodeComm} from './masterNodeComm';
 import AddressMappingSigner from '../utils/addressMappingSignature';
+import walletCtrl from './walletCtrl';
 
 
 class MainController {
@@ -121,7 +122,7 @@ class MainController {
                 }
                 else {
                     // it's been processed *now*
-                    if (await this.checkIfProcessed(txID, 0)) {
+                    if (await this.checkIfProcessed(txID, 0, true)) {
                         continue;
                     }
 
@@ -160,7 +161,7 @@ class MainController {
                         (async () => {
                             for (let tries = 1; tries <= 3; tries++) {
                                 try {
-                                    if (await this.checkIfProcessed(txID)) {
+                                    if (await this.checkIfProcessed(txID, 3, true)) {
                                         console.log("LastProcessedTxId already processed!");
                                         return;
                                     }
@@ -235,7 +236,7 @@ class MainController {
         return this.lastBlockNumber;
     }
 
-    async checkIfProcessed(txId, confirmations=3) {
+    async checkIfProcessed(txId, confirmations=3, selfOnly=false) {
         let cnt = 0;
         let block = 'pending';
 
@@ -245,11 +246,27 @@ class MainController {
 
         while (true) {
             try {
-                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call({}, block);
-                const txObj = await rskCtrl.multisig.methods["transactions"](txId).call({}, block);
-                console.log(`${txId}: is confirmed: ${isConfirmed}, is executed: ${txObj.executed}`);
+                if (selfOnly) {
+                    const currentConfirmations = rskCtrl.getConfirmations(txId).map(x => x.toLowerCase());
 
-                return isConfirmed || txObj.executed;
+                    // If we have already signed, balk out
+                    const ourAddress = walletCtrl.getWalletAddress().toLowerCase();
+                    if (currentConfirmations.indexOf() !== -1) {
+                        console.log("txid %s already confirmed by current signatory %s", txId, ourAddress);
+                        return true;
+                    }
+                }
+
+                const isConfirmed = await rskCtrl.multisig.methods["isConfirmed"](txId).call({}, block);
+                if (isConfirmed) {
+                    console.log(`${txId} has been confirmed`);
+                    return true;
+                }
+
+                const txObj = await rskCtrl.multisig.methods["transactions"](txId).call({}, block);
+                console.log(`${txId} has been executed: ${txObj.executed}`);
+
+                return txObj.executed;
             } catch (e) {
                 console.error("Error getting confirmed info");
                 console.error(e);
