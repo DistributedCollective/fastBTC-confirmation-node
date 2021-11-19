@@ -155,6 +155,9 @@ class MainController {
                             processedTransactionIds.add(txID);
                             continue;
                         }
+                        else {
+                            throw e;
+                        }
                     }
                     storedTxHash = txHash;
 
@@ -324,7 +327,7 @@ class MainController {
                 }
                 console.log("did not get payment info from master for %d, try %d", txId, retry);
             } catch (err) {
-                if (err.indexOf('404') !== -1) {
+                if (err.toString().indexOf('404') !== -1) {
                     throw new TxIdNotFoundError(`txid ${txId} not found from master`);
                 }
                 console.error(err.toString());
