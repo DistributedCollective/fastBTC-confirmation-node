@@ -22,7 +22,7 @@ class RskCtrl {
     }
 
     async confirmWithdrawRequest(txId) {
-        console.log("confirm tx " + txId);
+        console.log("confirming tx %s", txId);
 
         const release = await this.mutex.acquire();
 
@@ -38,6 +38,14 @@ class RskCtrl {
         if (wallet.length === 0) {
             release();
             throw new Error("No wallet to process the payment from");
+        }
+
+        const currentConfirmations = this.getConfirmations(txId).map(x => x.toLowerCase());
+
+        // If we have already signed, balk out
+        if (currentConfirmations.indexOf(wallet.toLowerCase()) !== -1) {
+            console.log("txid %s already confirmed by us, %s", txId, wallet);
+            return;
         }
 
         try {
@@ -56,14 +64,15 @@ class RskCtrl {
                 release();
             });
 
-            console.log("tx receipt:");
-            console.log(receipt);
+            console.log("tx receipt:", receipt);
 
             if (telegramBot) {
                 telegramBot.sendMessage(
                     `Transaction with ID ${txId} confirmed. Check it in: `+
                     `${conf.blockExplorer}/tx/${receipt.transactionHash}`
-                );
+                ).catch(e => {
+                    console.log("Error sending telegram message: %s", e);
+                });
             }
         } finally {
             release();
