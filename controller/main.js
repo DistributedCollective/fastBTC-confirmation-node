@@ -275,7 +275,7 @@ class MainController {
 
                     // If we have already signed, balk out
                     const ourAddress = walletCtrl.getWalletAddress().toLowerCase();
-                    if (currentConfirmations.indexOf() !== -1) {
+                    if (currentConfirmations.indexOf(ourAddress) !== -1) {
                         console.log("txid %s already confirmed by current signatory %s", txId, ourAddress);
                         return true;
                     }
