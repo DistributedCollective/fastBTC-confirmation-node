@@ -237,10 +237,10 @@ class MainController {
 
     async checkIfProcessed(txId, confirmations=3) {
         let cnt = 0;
-        let block = 'latest';
+        let block = 'pending';
 
         if (confirmations > 0) {
-            block = await this.cachedBlockNumber() - confirmations;
+            block = await this.cachedBlockNumber() - confirmations + 1;
         }
 
         while (true) {
@@ -301,8 +301,11 @@ class MainController {
      * 1. the provided btc address was derived from the same public keys and the same derivation scheme or not
      * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
-     * 3. timestamp < 1h (work in progress)
-     * 4. todo: btc deposit address match
+     * 3. btc deposit address is duly signed by current signatories
+     * 4. the payment has not been marked consumed
+     * 5. the payment is entered into the table
+     *
+     * TODO: check that timestamp is recent
      */
     async verifyPaymentInfo({btcAdr, txHash, vout, web3Adr, signatures, txID}) {
         if (generatedBtcAddresses.indexOf(btcAdr) === -1) {
