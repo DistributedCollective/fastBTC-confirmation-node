@@ -108,7 +108,7 @@ class MainController {
             );
 
             for (txID = start; txID <= end; txID++) {
-                if (processedTransactionIds.contains(txID)) {
+                if (processedTransactionIds.has(txID)) {
                     continue;
                 }
 
