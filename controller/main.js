@@ -227,8 +227,13 @@ class MainController {
 
                 from = txID + 1;
             }
-            console.log("next transaction shall be %d", txID);
-            await U.wasteTime(1);
+
+            loggingUtil.logUnique(
+                "next_hiwater",
+                `next transaction high-water mark shall be ${txID}`
+            );
+
+            await U.wasteTime(10);
         }
     }
 
