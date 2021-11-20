@@ -185,7 +185,7 @@ class MainController {
 
                     if (verified) {
                         // just do it once more to decrease number of races
-                        (async () => {
+                        (async (txID) => {
                             for (let tries = 1; tries <= 3; tries++) {
                                 try {
                                     if (await this.checkIfProcessed(txID, 0, true)) {
@@ -205,7 +205,7 @@ class MainController {
                                     );
                                 }
                             }
-                        })().catch(function (err) {
+                        })(txID).catch(function (err) {
                             console.error(
                                 "Confirmation failed after 3 tries: "
                                 + err.toString()
