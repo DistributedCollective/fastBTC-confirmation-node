@@ -427,7 +427,11 @@ class MainController {
             return false;
         }
 
-        await dbCtrl.addPaymentTx(txHash, vout, Number(tx.value) / 1e8, new Date(tx.blockTime), txID);
+        // if we found one added and it was the same txID then it is this one
+        if (! addedPayment) {
+            await dbCtrl.addPaymentTx(txHash, vout, Number(tx.value) / 1e8, new Date(tx.blockTime), txID);
+        }
+
         console.log('Valid BTC deposit');
         return true;
     }
