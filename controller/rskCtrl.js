@@ -25,6 +25,7 @@ class RskCtrl {
         console.log("Going to send confirmation for tx %s", txId);
 
         const release = await this.mutex.acquire();
+        console.log("Mutex acquired for sending tx %s", txId);
 
         let wallet;
         try {
@@ -41,7 +42,17 @@ class RskCtrl {
             throw new Error("No wallet to process the payment from");
         }
 
-        const currentConfirmations = (await this.getConfirmations(txId)).map(x => x.toLowerCase());
+        const rv = await this.getConfirmations(txId);
+        console.log("Confirmations for current transaction: %s", rv);
+
+        let currentConfirmations;
+        try {
+             currentConfirmations = rv.map(x => x.toLowerCase())
+        }
+        catch (e) {
+            console.log("Got exception trying to map current confirmations", e);
+            throw e;
+        }
 
         // If we have already signed, balk out
         if (currentConfirmations.indexOf(wallet.toLowerCase()) !== -1) {
