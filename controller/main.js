@@ -181,15 +181,15 @@ class MainController {
                         signatures,
                         txID,
                     });
-                    console.log("LastProcessedTxId verified: %s", verified);
+                    console.log(`${txID} verified: %s`, verified);
 
                     if (verified) {
                         // just do it once more to decrease number of races
                         (async () => {
                             for (let tries = 1; tries <= 3; tries++) {
                                 try {
-                                    if (await this.checkIfProcessed(txID, 3, true)) {
-                                        console.log("LastProcessedTxId already processed!");
+                                    if (await this.checkIfProcessed(txID, 0, true)) {
+                                        console.log(`${txID} already processed!`);
                                         return;
                                     }
                                     await rskCtrl.confirmWithdrawRequest(txID);

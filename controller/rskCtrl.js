@@ -22,7 +22,7 @@ class RskCtrl {
     }
 
     async confirmWithdrawRequest(txId) {
-        console.log("confirming tx %s", txId);
+        console.log("Going to send confirmation for tx %s", txId);
 
         const release = await this.mutex.acquire();
 
@@ -31,6 +31,7 @@ class RskCtrl {
             wallet = await this.getWallet();
         }
         catch (e) {
+            console.log("Unable to acquire wallet", e)
             release();
             throw e;
         }
@@ -68,12 +69,15 @@ class RskCtrl {
 
             if (telegramBot) {
                 telegramBot.sendMessage(
-                    `Transaction with ID ${txId} confirmed. Check it in: `+
+                    `Transaction with ID ${txId} confirmed. Check it in: ` +
                     `${conf.blockExplorer}/tx/${receipt.transactionHash}`
                 ).catch(e => {
                     console.log("Error sending telegram message: %s", e);
                 });
             }
+        } catch (e) {
+            console.log(`Got ${e} when trying to confirm`);
+            throw e;
         } finally {
             release();
             walletManager.decreasePending(wallet);
