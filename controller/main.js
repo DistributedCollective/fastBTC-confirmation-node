@@ -42,6 +42,9 @@ class MainController {
         this.walletAddress = conf.account.adr.toLowerCase();
         this.addressMappingSigner = new AddressMappingSigner();
 
+        this.lastBlockNumber = null;
+        this.blockNumberCacheExpires = 0;
+
         try {
             const resp = await this.masterNodeComm.post("getCosignerIndexAndDelay");
             console.log(resp.data);
@@ -216,7 +219,7 @@ class MainController {
             if (txID >= from) {
                 await dbCtrl.lastProcessedTxID.update(
                     {
-                        id: 0,
+                            id: 0,
                     },
                     {
                         txID: txID,
@@ -253,9 +256,6 @@ class MainController {
             }
         }
     }
-
-    lastBlockNumber = null;
-    blockNumberCacheExpires = 0;
 
     async cachedBlockNumber() {
         if (this.blockNumberCacheExpires < (+new Date())) {
