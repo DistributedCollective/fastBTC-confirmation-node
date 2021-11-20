@@ -422,8 +422,8 @@ class MainController {
         console.log(`Had ${nVerifiedSignatures} on deposit address; required ${nRequiredSignatures}`);
 
         const addedPayment = await dbCtrl.getPayment(txHash, vout);
-        if (addedPayment) {
-            console.error(`double spend attempted for ${txHash}/${vout}`);
+        if (addedPayment && addedPayment.txId !== txID) {
+            console.error(`double spend attempted for ${txHash}/${vout}; was already spent for ${addedPayment.txId}, now reused for ${txID}`);
             return false;
         }
 
