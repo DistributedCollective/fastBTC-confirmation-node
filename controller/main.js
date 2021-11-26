@@ -99,7 +99,6 @@ class MainController {
         const processedTransactionIds = new Set();
 
         while (true) {
-            let txID = from - 1000;
             const numberOfTransactions = await this.getNrOfTx();
             const earliestConfirmationTime = Date.now() + this.delay * 1000;
 
@@ -110,14 +109,15 @@ class MainController {
 
             let storedTxHash = null;
 
-            const start = from - 1000;
+            const start = Math.max(from - 1000, 0);
             const end = numberOfTransactions - 1;
             loggingUtil.logUnique(
                 "multisig_loop_range",
                 `Checking transactions from ${start} through ${end}`
             );
 
-            for (txID = start; txID <= end; txID++) {
+            let txID = start;
+            for ( ; txID <= end; txID++) {
                 if (processedTransactionIds.has(txID)) {
                     continue;
                 }
