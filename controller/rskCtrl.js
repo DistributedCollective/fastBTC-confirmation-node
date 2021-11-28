@@ -8,6 +8,7 @@ import conf from '../config/config';
 import {Mutex} from 'async-mutex';
 import walletManager from './walletCtrl';
 import U from '../utils/helper'
+import {BigNumber} from 'ethers';
 
 
 class RskCtrl {
@@ -176,7 +177,7 @@ class RskCtrl {
             throw new Error('Invalid transaction destination');
         }
 
-        if (rskTransaction.value.toNumber() !== 0) {
+        if (! BigNumber.from(rskTransaction.value).eq(0)) {
             console.error(`The transaction value for ${txID} is not zero`);
             throw new Error('Multisig transaction value is not zero');
         }
