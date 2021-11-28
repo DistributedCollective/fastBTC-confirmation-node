@@ -210,9 +210,7 @@ class RskCtrl {
                 console.error(`The aggregator for ${txID} is invalid ${params.receiver.toLowerCase()}, expected ${conf.bscAggregatorAddress.toLowerCase()}`);
             }
 
-            const bscReceiverAddress = this.web3.eth.abi.decodeParameters([
-                {name: "receiver", type: "address"}
-            ], params.extraData);
+            const bscReceiverAddress = this.web3.eth.abi.decodeParameter('address', params.extraData);
 
             return {
                 ...rskTransaction,
