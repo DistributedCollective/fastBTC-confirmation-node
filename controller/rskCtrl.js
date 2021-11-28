@@ -169,7 +169,7 @@ class RskCtrl {
     }
 
     async extractTransactionContents(txID) {
-        const rskTransaction = await this.multisig.methods.transactions(txID);
+        const rskTransaction = await this.multisig.methods.transactions(txID).call();
 
         if (rskTransaction.destination.toLowerCase() !== conf.contractAddress.toLowerCase()) {
             console.error(`Transaction target for ${txID} is invalid (${rskTransaction.destination})`);
