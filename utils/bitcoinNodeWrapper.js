@@ -135,6 +135,7 @@ class BitcoinNodeWrapper {
             console.error("error getting rawtx")
             console.error(e);
         }
+        return null;
     }
 
     async sendRawTransaction(hex) {

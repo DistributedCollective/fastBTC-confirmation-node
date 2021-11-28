@@ -18,6 +18,7 @@ import loggingUtil from '../utils/loggingUtil';
 import {createMasterNodeComm} from './masterNodeComm';
 import AddressMappingSigner from '../utils/addressMappingSignature';
 import walletCtrl from './walletCtrl';
+import {BigNumber} from 'ethers';
 
 class TxIdNotFoundError extends Error {
     constructor(message) {
@@ -351,8 +352,9 @@ class MainController {
      * btcAdr and txHash can't be null!
      * 2. the tx hash is valid
      * 3. btc deposit address is duly signed by current signatories
-     * 4. the payment has not been marked consumed
-     * 5. the payment is entered into the table
+     * 4. the transaction in multisig matches the data.
+     * 5. the payment has not been marked consumed
+     * 6. the payment is entered into the table
      *
      * TODO: check that timestamp is recent
      */
@@ -369,28 +371,25 @@ class MainController {
             return false;
         }
 
-        if (vout === -1 || vout == null) {
-            // find the payment in xact
-            const addrInVout = (tx.vout || []).find(out => out.address === btcAdr);
-            if (!addrInVout) {
-                console.log("BTC address is not in vout of tx");
-                return false;
-            }
-        } else {
-            let found = false;
+        let voutValue = 0;
 
-            // we've got a specific vout number now!
-            for (let voutItem of tx.vout) {
-                if (voutItem.vout === vout && voutItem.address === btcAdr) {
-                    found = true;
-                    break;
-                }
-            }
+        // Previous versions supported -1 vout values for unknown indices
+        // but these are no longer supported.
+        let found = false;
 
-            if (!found) {
-                console.log("The given BTC address is not in vout %d of tx, or no such vout exists", vout);
-                return false;
+        // we've got a specific vout number now!
+        for (let voutItem of tx.vout) {
+            if (voutItem.vout === vout && voutItem.address === btcAdr) {
+                found = true;
+                // from API this is full BTC but here, it is satoshis
+                voutValue = voutItem.value;
+                break;
             }
+        }
+
+        if (!found) {
+            console.log("The given BTC address is not in vout %d of tx, or no such vout exists", vout);
+            return false;
         }
 
         const cosigners = new Set((await rskCtrl.getCurrentCoSigners()).map((a) => a.toLowerCase()));
@@ -421,15 +420,45 @@ class MainController {
 
         console.log(`Had ${nVerifiedSignatures} on deposit address; required ${nRequiredSignatures}`);
 
+        try {
+            const contents = await rskCtrl.extractTransactionContents(txID);
+            if (contents.receiver.toLowerCase() !== web3Adr) {
+                console.error(`Transaction receiver ${contents.receiver} does not match expected ${web3Adr}`);
+                return false;
+            }
+
+            const transferWei = BigNumber.from(contents.amount);
+
+            // voutValue is in sats, get it to wei
+            const depositWei = BigNumber.from(voutValue).mul(1e10);
+
+            if (transferWei.gt(depositWei)) {
+                console.error(`Attempting to transfer ${transferWei} which exceeds the deposit ${depositWei}`);
+                return false;
+            }
+        }
+
+        catch (e) {
+            console.error("Failed to validate transaction contents", e);
+            return false;
+        }
+
         const addedPayment = await dbCtrl.getPayment(txHash, vout);
         if (addedPayment && addedPayment.txId !== txID) {
-            console.error(`double spend attempted for ${txHash}/${vout}; was already spent for ${addedPayment.txId}, now reused for ${txID}`);
+            console.error(`double spend attempted for ${txHash}/${vout}; `
+             + `was already spent for ${addedPayment.txId}, now reused for ${txID}`);
             return false;
         }
 
         // if we found one added and it was the same txID then it is this one
         if (! addedPayment) {
-            await dbCtrl.addPaymentTx(txHash, vout, Number(tx.value) / 1e8, new Date(tx.blockTime), txID);
+            await dbCtrl.addPaymentTx(
+                txHash,
+                vout,
+                Number(tx.value) / 1e8,
+                new Date(tx.blockTime),
+                txID
+            );
         }
 
         console.log('Valid BTC deposit');
