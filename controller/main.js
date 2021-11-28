@@ -88,7 +88,7 @@ class MainController {
      * verify this information and process the confirmation
      */
     async pollAndConfirmWithdrawRequests() {
-        let from = conf.startIndex;
+        let from = conf.startIndex || 0;
 
         // check if we have processed until a later transaction
         const lastTx = await dbCtrl.lastProcessedTxID.findOne({id: 0})
@@ -110,7 +110,7 @@ class MainController {
 
             let storedTxHash = null;
 
-            const start = Math.max(from - 1000, 0);
+            const start = Math.max(from - 1000, conf.startIndex || 0);
             const end = numberOfTransactions - 1;
             loggingUtil.logUnique(
                 "multisig_loop_range",
