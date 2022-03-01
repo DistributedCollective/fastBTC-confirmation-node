@@ -38,25 +38,39 @@ class RskCtrl {
         }
 
         if (wallet.length === 0) {
+            walletManager.decreasePending(wallet);
             release();
             throw new Error("No wallet to process the payment from");
         }
 
-        const rv = await this.getConfirmations(txId);
-        console.log("Confirmations for current transaction: %s", rv);
+        let rv;
+        try {
+            rv = await this.getConfirmations(txId);
+            console.log("Confirmations for current transaction: %s", rv);
+        }
+        catch (e) {
+            console.error("Got exception trying to get current confirmations: %s", e);
+            walletManager.decreasePending(wallet);
+            release();
+            throw e;
+        }
 
         let currentConfirmations;
         try {
              currentConfirmations = rv.map(x => x.toLowerCase())
         }
         catch (e) {
-            console.log("Got exception trying to map current confirmations", e);
+            console.log("Got exception trying to map current confirmations: %s", e);
+            walletManager.decreasePending(wallet);
+            release();
             throw e;
         }
 
         // If we have already signed, balk out
         if (currentConfirmations.indexOf(wallet.toLowerCase()) !== -1) {
             console.log("txid %s already confirmed by us, %s", txId, wallet);
+            walletManager.decreasePending(wallet);
+            release();
             return;
         }
 
@@ -90,8 +104,8 @@ class RskCtrl {
             console.log(`Got ${e} when trying to confirm`);
             throw e;
         } finally {
-            release();
             walletManager.decreasePending(wallet);
+            release();
         }
     }
 
