@@ -422,6 +422,7 @@ class MainController {
 
         try {
             const contents = await rskCtrl.extractTransactionContents(txID);
+            console.log(`Transaction ${txID} codes a transfer of ${contents.amount} wei for ${contents.receiver}`);
             if (contents.receiver.toLowerCase() !== web3Adr) {
                 console.error(`Transaction receiver ${contents.receiver} does not match expected ${web3Adr}`);
                 return false;
