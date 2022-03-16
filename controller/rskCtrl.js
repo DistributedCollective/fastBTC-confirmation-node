@@ -8,6 +8,7 @@ import conf from '../config/config';
 import {Mutex} from 'async-mutex';
 import walletManager from './walletCtrl';
 import U from '../utils/helper'
+import {BigNumber} from 'ethers';
 
 
 class RskCtrl {
@@ -17,6 +18,26 @@ class RskCtrl {
         this.multisig = new this.web3.eth.Contract(multisigAbi, conf.multisigAddress);
         this.lastGasPrice = 0;
         this.lastNonce = undefined;
+
+        this.withdrawAdminSelector = this.web3.eth.abi.encodeFunctionSignature({
+            name: 'withdrawAdmin',
+            type: 'function',
+            inputs: [
+                {"name": "receiver", "type": "address"},
+                {"name": "amount",   "type": "uint256"}
+            ]
+        });
+
+        this.transferToBridgeSelector = this.web3.eth.abi.encodeFunctionSignature({
+            name: 'transferToBridge',
+            type: 'function',
+            inputs: [
+                {"name": "bridge", "type": "address"},
+                {"name": "receiver", "type": "address"},
+                {"name": "amount",   "type": "uint256"},
+                {"name": "extraData", "type": "bytes"},
+            ]
+        });
 
         walletManager.init(this.web3);
     }
@@ -160,6 +181,60 @@ class RskCtrl {
             console.error("Error getRequiredNumberOfCoSigners", err);
             throw err;
         }
+    }
+
+    async extractTransactionContents(txID) {
+        const rskTransaction = await this.multisig.methods.transactions(txID).call();
+
+        if (rskTransaction.destination.toLowerCase() !== conf.contractAddress.toLowerCase()) {
+            console.error(`Transaction target for ${txID} is invalid (${rskTransaction.destination})`);
+            throw new Error('Invalid transaction destination');
+        }
+
+        if (! BigNumber.from(rskTransaction.value).eq(0)) {
+            console.error(`The transaction value for ${txID} is not zero`);
+            throw new Error('Multisig transaction value is not zero');
+        }
+
+        if (rskTransaction.data.startsWith(this.withdrawAdminSelector)) {
+            const argBytes = '0x' + rskTransaction.data.substring(this.withdrawAdminSelector.length);
+
+            const params = this.web3.eth.abi.decodeParameters([
+                {name: "receiver", type: "address"},
+                {name: "amount",   type: "uint256"}
+            ], argBytes)
+
+            return {...rskTransaction, ...params};
+        }
+
+        if (rskTransaction.data.startsWith(this.transferToBridgeSelector)) {
+            const argBytes = '0x' + rskTransaction.data.substring(this.transferToBridgeSelector.length);
+            const params = this.web3.eth.abi.decodeParameters([
+                {name: "bridge", type: "address"},
+                {name: "receiver", type: "address"},
+                {name: "amount",   type: "uint256"},
+                {name: "extraData", type: "bytes"},
+            ], argBytes);
+
+            if (params.bridge.toLowerCase() !== conf.bscBridgeAddress.toLowerCase()) {
+                console.error(`The bridge for ${txID} is invalid ${params.bridge.toLowerCase()}, expected ${conf.bscBridgeAddress.toLowerCase()}`);
+            }
+
+            if (params.receiver.toLowerCase() !== conf.bscAggregatorAddress.toLowerCase()) {
+                console.error(`The aggregator for ${txID} is invalid ${params.receiver.toLowerCase()}, expected ${conf.bscAggregatorAddress.toLowerCase()}`);
+            }
+
+            const bscReceiverAddress = this.web3.eth.abi.decodeParameter('address', params.extraData);
+
+            return {
+                ...rskTransaction,
+                amount: params.amount,
+                receiver: conf.bscPrefix + bscReceiverAddress,
+            }
+        }
+
+        console.error("The transaction payload starts with an unknown function selector!");
+        throw new Error('Invalid function selector!');
     }
 
     /**
