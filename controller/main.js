@@ -451,7 +451,8 @@ class MainController {
             return false;
         }
 
-        // if we found one added and it was the same txID then it is this one
+        // if we found one added, and it was the same txID then it is this one;
+        // otherwise add a row.
         if (! addedPayment) {
             await dbCtrl.addPaymentTx(
                 txHash,

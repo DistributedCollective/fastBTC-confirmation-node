@@ -115,19 +115,23 @@ class BitcoinNodeWrapper {
             const res = await this.call("gettransaction", [txId, true]);
 
             if (res) {
-                const vout = (res.details || []).map(el => {
-                    return {
-                        value: Number(el.amount) * 1e8,
-                        address: el.address,
-                        vout: el.vout
-                    }
-                })
+                const vout = (res.details || []).map(el => ({
+                    // N.B. get the value in sats.
+                    // The bitcoin RPC API is utterly borken and this
+                    // returns some fractional float which multiplied by 1e8
+                    // does whatever stupid stuff, and you *must* have
+                    // the round here
+                    value: Math.round(Number(el.amount) * 1e8),
+                    address: el.address,
+                    vout: el.vout,
+                }));
 
                 return {
                     hex: res.hex,
                     confirmations: res.confirmations,
-                    value: Number(res.amount) * 1e8,
-                    vout: vout
+                    // ditto:
+                    value: Math.round(Number(res.amount) * 1e8),
+                    vout,
                 };
 
             }
