@@ -9,7 +9,9 @@
         "treekill": false,
         "out_file": "./logs/out.log",
         "error_file": "./logs/err.log",
-        "time": true,
+        "json": true,
+        "log_type": "json",
+        "log_date_format": "YYYY-MM-DD HH:mm:ss.SSS[Z]",
         "env": {
           "NODE_ENV": "production"
         }
