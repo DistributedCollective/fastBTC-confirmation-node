@@ -244,7 +244,7 @@ class MainController {
     async getNrOfTx() {
         while (true) {
             try {
-                const numberOfTransactions = await rskCtrl.multisig.methods["getTransactionCount"](true, true).call();
+                const numberOfTransactions = await rskCtrl.multisig.methods.transactionCount().call();
                 if (!numberOfTransactions) {
                     await U.wasteTime(5)
                     continue;
