@@ -28,6 +28,18 @@ class RskCtrl {
             ]
         });
 
+        this.transferToUserSelector = this.web3.eth.abi.encodeFunctionSignature({
+            name: 'transferToUser',
+            type: 'function',
+            inputs: [
+                {"name": "receiver", "type": "address"},
+                {"name": "amount", "type": "uint256"},
+                {"name": "fee", "type": "uint256"},
+                {"name": "btcTxHash", "type": "bytes32"},
+                {"name": "btcTxVout", "type": "uint256"},
+            ]
+        });
+
         this.transferToBridgeSelector = this.web3.eth.abi.encodeFunctionSignature({
             name: 'transferToBridge',
             type: 'function',
@@ -203,6 +215,20 @@ class RskCtrl {
                 {name: "receiver", type: "address"},
                 {name: "amount",   type: "uint256"}
             ], argBytes)
+
+            return {...rskTransaction, ...params};
+        }
+
+        if (rskTransaction.data.startsWith(this.transferToUserSelector)) {
+            const argBytes = '0x' + rskTransaction.data.substring(this.transferToUserSelector.length);
+
+            const params = this.web3.eth.abi.decodeParameters([
+                {"name": "receiver", "type": "address"},
+                {"name": "amount", "type": "uint256"},
+                {"name": "fee", "type": "uint256"},
+                {"name": "btcTxHash", "type": "bytes32"},
+                {"name": "btcTxVout", "type": "uint256"},
+            ], argBytes);
 
             return {...rskTransaction, ...params};
         }

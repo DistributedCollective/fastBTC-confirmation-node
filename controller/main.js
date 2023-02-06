@@ -437,6 +437,8 @@ class MainController {
                 console.error(`Attempting to transfer ${transferWei} which exceeds the deposit ${depositWei}`);
                 return false;
             }
+
+            // TODO: validate btcTxHash, btcTxVout, and fee, if given
         }
 
         catch (e) {
