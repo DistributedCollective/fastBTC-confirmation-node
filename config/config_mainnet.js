@@ -1,11 +1,12 @@
 import telegramBot from '../secrets/telegram.js';
 import walletSigs from '../secrets/walletSigs.main';
 import accounts from '../secrets/accounts';
+import btcNodes from '../secrets/btcNode';
 
 export default {
     masterNode: 'http://3.131.33.161:3000/',
     rskNodeProvider: 'https://mainnet.sovryn.app/rpc',
-    btcNodeProvider: {},
+    btcNodeProvider: btcNodes['main'],
     network: 'main',
     db: 'node_mainnet',
     contractAddress: '0xC9e14126E5796e999890a4344b8e4c99Ac7002A1'.toLowerCase(),
