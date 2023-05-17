@@ -122,6 +122,7 @@ class BitcoinNodeWrapper {
                     // returns some fractional float which multiplied by 1e8
                     // does whatever stupid stuff, and you *must* have
                     // the round here
+                    category: el.category,
                     value: Math.round(Number(el.amount) * 1e8),
                     address: el.address,
                     vout: el.vout,
