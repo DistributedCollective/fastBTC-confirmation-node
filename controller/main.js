@@ -375,7 +375,7 @@ class MainController {
 
         // we've got a specific vout number now!
         for (let voutItem of tx.vout) {
-            if (voutItem.vout === vout && voutItem.address === btcAdr) {
+            if (voutItem.vout === vout && voutItem.address === btcAdr && voutItem.category === "receive") {
                 found = true;
                 // from API this is full BTC but here, it is satoshis
                 voutValue = voutItem.value;

@@ -7,7 +7,8 @@ class BitcoinNodeWrapper {
         this.client = new RPCClient({
             host: uri.hostname,
             port: uri.port,
-            protocol: uri.protocol
+            protocol: uri.protocol,
+            path: uri.pathname,
         });
         this.client.setBasicAuth(user, password);
     }
