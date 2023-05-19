@@ -54,15 +54,11 @@ class MainController {
             console.log("My delay is " + resp.data.delay + " seconds");
             this.delay = resp.data.delay;
 
-            const node = await this.masterNodeComm.post("getNode");
-
-            if (!node || !node.data || !node.data.url) {
-                console.error("Can't continue without access to a btc node");
-                return;
-            }
-
-            conf.btcNodeProvider = node.data;
             this.api = BitcoinNodeWrapper;
+            if (! conf.btcNodeProvider.url) {
+                console.error("No btc node provider url provided");
+                process.exit(1);
+            }
             this.api.init(conf.btcNodeProvider);
             console.log("Node setup successfully")
         } catch (err) {
@@ -379,7 +375,7 @@ class MainController {
 
         // we've got a specific vout number now!
         for (let voutItem of tx.vout) {
-            if (voutItem.vout === vout && voutItem.address === btcAdr) {
+            if (voutItem.vout === vout && voutItem.address === btcAdr && voutItem.category === "receive") {
                 found = true;
                 // from API this is full BTC but here, it is satoshis
                 voutValue = voutItem.value;
